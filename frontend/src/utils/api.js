@@ -1,6 +1,16 @@
 import axios from 'axios';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+// Use production API URL for deployed app, otherwise use local
+const getApiUrl = () => {
+  if (typeof window !== 'undefined' && window.location.hostname !== 'localhost') {
+    // Production - use Render backend
+    return 'https://ihmaket-backend.onrender.com/api';
+  }
+  // Development - use local
+  return import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+};
+
+const API_URL = getApiUrl();
 const API_BASE_URL = API_URL.replace(/\/api\/?$/, '');
 
 // Create axios instance
