@@ -12,7 +12,7 @@ async function seedAdmin() {
 
     // Create admin user
     const adminEmail = 'admin@ihmaket.com';
-    const adminPassword = 'Admin123!';
+    const adminPassword = 'admin123';
 
     let admin = await User.findOne({ email: adminEmail });
 
@@ -35,7 +35,7 @@ async function seedAdmin() {
 
     console.log('\n🎉 Admin Account Ready!');
     console.log('Email: admin@ihmaket.com');
-    console.log('Password: Admin123!');
+    console.log('Password: admin123');
     console.log('\n⚠️  Please change the password after first login!');
 
     await mongoose.connection.close();
