@@ -1,0 +1,48 @@
+# Dependencies
+node_modules/
+/.pnp
+.pnp.js
+
+# Production builds
+/build
+/dist
+*.tsbuildinfo
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# OS
+Thumbs.db
+
+# Uploads (for production, these will be handled separately)
+/backend/uploads/*
+!/backend/uploads/.gitkeep
+
+# Mobile app specific
+mobile/iHmaket/node_modules/
+mobile/iHmaket/.expo/
+mobile/iHmaket/dist/
+mobile/iHmaket/expo-env.d.ts
+
+# Expo
+.expo-shared/
+
+# Cache
+.cache/
+*.cache
