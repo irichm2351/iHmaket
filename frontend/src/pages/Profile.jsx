@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import useAuthStore from '../store/authStore';
-import { authAPI, getImageUrl } from '../utils/api';
+import { authAPI, getImageUrl, getAuthToken, userAPI, serviceAPI, API_URL } from '../utils/api';
 import { nigeriaData } from '../utils/nigeriaData';
 import toast from 'react-hot-toast';
 import { FiUser, FiMail, FiPhone, FiMapPin, FiCamera } from 'react-icons/fi';
@@ -40,7 +40,7 @@ const Profile = () => {
     if (user?.role !== 'provider') return;
     try {
       const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/reviews/provider/${user._id}`
+        `${API_URL}/reviews/provider/${user._id}`
       );
       const data = await response.json();
       if (data.success) {

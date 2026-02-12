@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { FiUsers, FiShoppingBag, FiPower, FiSlash, FiTrash2, FiSearch, FiChevronDown, FiChevronUp, FiMessageSquare, FiSend } from 'react-icons/fi';
 import Loader from '../components/Loader';
 import toast from 'react-hot-toast';
-import { getAuthToken } from '../utils/api';
+import { getAuthToken, API_URL } from '../utils/api';
 
 const AdminDashboard = () => {
   const [loading, setLoading] = useState(true);
@@ -53,7 +53,7 @@ const AdminDashboard = () => {
     try {
       const token = getAuthToken();
       const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/admin/stats`,
+        `${API_URL}/admin/stats`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       const data = await response.json();
@@ -78,7 +78,7 @@ const AdminDashboard = () => {
       });
 
       const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/admin/users?${params}`,
+        `${API_URL}/admin/users?${params}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       const data = await response.json();
@@ -104,7 +104,7 @@ const AdminDashboard = () => {
       });
 
       const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/admin/kyc?${params}`,
+        `${API_URL}/admin/kyc?${params}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       const data = await response.json();
@@ -123,7 +123,7 @@ const AdminDashboard = () => {
     try {
       const token = getAuthToken();
       const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/admin/users/${userId}/status`,
+        `${API_URL}/admin/users/${userId}/status`,
         {
           method: 'PUT',
           headers: { Authorization: `Bearer ${token}` }
@@ -146,7 +146,7 @@ const AdminDashboard = () => {
     try {
       const token = getAuthToken();
       const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/admin/users/${userId}/restrict`,
+        `${API_URL}/admin/users/${userId}/restrict`,
         {
           method: 'PUT',
           headers: {
@@ -172,7 +172,7 @@ const AdminDashboard = () => {
     try {
       const token = getAuthToken();
       const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/admin/users/${userId}`,
+        `${API_URL}/admin/users/${userId}`,
         {
           method: 'DELETE',
           headers: { Authorization: `Bearer ${token}` }
@@ -192,7 +192,7 @@ const AdminDashboard = () => {
     try {
       const token = getAuthToken();
       const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/admin/users/${userId}/role`,
+        `${API_URL}/admin/users/${userId}/role`,
         {
           method: 'PUT',
           headers: {
@@ -218,7 +218,7 @@ const AdminDashboard = () => {
     try {
       const token = getAuthToken();
       const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/admin/kyc/${userId}/approve`,
+        `${API_URL}/admin/kyc/${userId}/approve`,
         {
           method: 'PUT',
           headers: { Authorization: `Bearer ${token}` }
@@ -242,7 +242,7 @@ const AdminDashboard = () => {
     try {
       const token = getAuthToken();
       const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/admin/kyc/${userId}/reject`,
+        `${API_URL}/admin/kyc/${userId}/reject`,
         {
           method: 'PUT',
           headers: {
@@ -274,7 +274,7 @@ const AdminDashboard = () => {
       });
 
       const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/reports?${params}`,
+        `${API_URL}/reports?${params}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       const data = await response.json();
@@ -304,7 +304,7 @@ const AdminDashboard = () => {
     try {
       const token = getAuthToken();
       const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/reports/${selectedReport._id}/status`,
+        `${API_URL}/reports/${selectedReport._id}/status`,
         {
           method: 'PUT',
           headers: {
@@ -333,7 +333,7 @@ const AdminDashboard = () => {
     try {
       const token = getAuthToken();
       const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/reports/${reportId}`,
+        `${API_URL}/reports/${reportId}`,
         {
           method: 'DELETE',
           headers: { Authorization: `Bearer ${token}` }
@@ -395,7 +395,7 @@ const AdminDashboard = () => {
       }
 
       const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/messages/bulk/send-all`,
+        `${API_URL}/messages/bulk/send-all`,
         {
           method: 'POST',
           headers: {

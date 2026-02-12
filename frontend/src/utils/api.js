@@ -10,7 +10,7 @@ const getApiUrl = () => {
   return import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 };
 
-const API_URL = getApiUrl();
+export const API_URL = getApiUrl();
 const API_BASE_URL = API_URL.replace(/\/api\/?$/, '');
 
 // Create axios instance
