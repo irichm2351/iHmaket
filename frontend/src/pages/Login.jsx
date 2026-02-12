@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { FiMail, FiLock } from 'react-icons/fi';
 import useAuthStore from '../store/authStore';
+import { API_URL } from '../utils/api';
 import toast from 'react-hot-toast';
 
 const Login = () => {
@@ -11,6 +12,10 @@ const Login = () => {
     email: '',
     password: '',
   });
+
+  useEffect(() => {
+    console.log('Login page loaded. API_URL:', API_URL);
+  }, []);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
