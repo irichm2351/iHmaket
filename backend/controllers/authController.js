@@ -2,6 +2,7 @@ const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const Message = require('../models/Message');
 const cloudinary = require('../config/cloudinary');
+const fs = require('fs').promises;
 
 // Generate JWT Token
 const generateToken = (id) => {
@@ -255,6 +256,8 @@ exports.updateProfile = async (req, res) => {
 // @route   POST /api/auth/upload-profile-pic
 // @access  Private
 exports.uploadProfilePic = async (req, res) => {
+  let tempFilePath = null;
+  
   try {
     if (!req.file) {
       return res.status(400).json({
@@ -263,9 +266,18 @@ exports.uploadProfilePic = async (req, res) => {
       });
     }
 
+    tempFilePath = req.file.path;
+    console.log('File received at:', tempFilePath);
+
     const user = await User.findById(req.user.id);
 
     if (!user) {
+      // Clean up temp file if user not found
+      try {
+        await fs.unlink(tempFilePath);
+      } catch (e) {
+        console.error('Error deleting temp file:', e.message);
+      }
       return res.status(404).json({
         success: false,
         message: 'User not found'
@@ -275,18 +287,18 @@ exports.uploadProfilePic = async (req, res) => {
     // Upload to Cloudinary
     let result;
     try {
-      result = await cloudinary.uploader.upload(req.file.path, {
+      console.log('Starting Cloudinary upload from:', tempFilePath);
+      result = await cloudinary.uploader.upload(tempFilePath, {
         folder: 'servicehub/profiles',
-        width: 500,
-        height: 500,
-        crop: 'fill',
+        resource_type: 'auto',
         timeout: 60000
       });
+      console.log('Cloudinary upload successful:', result.secure_url);
     } catch (cloudinaryError) {
-      console.error('Cloudinary upload error:', cloudinaryError);
+      console.error('Cloudinary upload error:', cloudinaryError.message);
       return res.status(500).json({
         success: false,
-        message: 'Failed to upload image to server: ' + (cloudinaryError.message || JSON.stringify(cloudinaryError))
+        message: 'Failed to upload image to server: ' + cloudinaryError.message
       });
     }
 
@@ -299,6 +311,7 @@ exports.uploadProfilePic = async (req, res) => {
 
     user.profilePic = result.secure_url;
     await user.save();
+    console.log('User profile picture updated:', user._id);
 
     res.status(200).json({
       success: true,
@@ -311,6 +324,16 @@ exports.uploadProfilePic = async (req, res) => {
       success: false,
       message: error.message || 'Error uploading profile picture'
     });
+  } finally {
+    // Clean up temporary file
+    if (tempFilePath) {
+      try {
+        await fs.unlink(tempFilePath);
+        console.log('Temporary file cleaned up:', tempFilePath);
+      } catch (error) {
+        console.error('Error cleaning up temporary file:', error.message);
+      }
+    }
   }
 };
 
