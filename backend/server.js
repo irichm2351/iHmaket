@@ -96,6 +96,26 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'OK', message: 'ServiceHub API is running' });
 });
 
+// Cloudinary configuration test route
+app.get('/api/cloudinary-check', (req, res) => {
+  const cloudinary = require('./config/cloudinary');
+  const config = cloudinary.config();
+  
+  res.json({
+    status: 'OK',
+    cloudinary: {
+      cloud_name: config.cloud_name ? '✅ Set' : '❌ Not set',
+      api_key: config.api_key ? '✅ Set' : '❌ Not set',
+      api_secret: config.api_secret ? '✅ Set' : '❌ Not set',
+    },
+    environment: {
+      CLOUDINARY_CLOUD_NAME: process.env.CLOUDINARY_CLOUD_NAME ? '✅ Set' : '❌ Not set',
+      CLOUDINARY_API_KEY: process.env.CLOUDINARY_API_KEY ? '✅ Set' : '❌ Not set',
+      CLOUDINARY_API_SECRET: process.env.CLOUDINARY_API_SECRET ? '✅ Set (hidden)' : '❌ Not set',
+    }
+  });
+});
+
 // Socket.io connection handling
 const onlineUsers = new Map();
 
