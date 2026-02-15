@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const multer = require('multer');
 const { body } = require('express-validator');
 const authController = require('../controllers/authController');
 const { protect, authorize } = require('../middleware/auth');
@@ -42,6 +43,28 @@ router.post(
   upload.single('profilePic'),
   authController.uploadProfilePic
 );
+
+// Error handler for multer errors on profile pic upload
+router.use('/upload-profile-pic', (err, req, res, next) => {
+  if (err instanceof multer.MulterError) {
+    if (err.code === 'FILE_TOO_LARGE') {
+      return res.status(400).json({
+        success: false,
+        message: 'File size too large. Maximum size is 50MB'
+      });
+    }
+    return res.status(400).json({
+      success: false,
+      message: 'File upload error: ' + err.message
+    });
+  } else if (err) {
+    return res.status(400).json({
+      success: false,
+      message: err.message || 'Upload error'
+    });
+  }
+  next();
+});
 router.put('/change-password', protect, authController.changePassword);
 router.post(
   '/kyc',
