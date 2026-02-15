@@ -41,7 +41,7 @@ const userSchema = new mongoose.Schema({
   },
   profilePic: {
     type: String,
-    default: 'https://res.cloudinary.com/demo/image/upload/avatar-placeholder.png'
+    default: 'https://via.placeholder.com/150?text=User+Avatar'
   },
   bio: {
     type: String,
