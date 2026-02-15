@@ -259,7 +259,12 @@ exports.uploadProfilePic = async (req, res) => {
   let tempFilePath = null;
   
   try {
+    console.log('=== PROFILE PIC UPLOAD REQUEST ===');
+    console.log('User ID:', req.user?.id);
+    console.log('File received:', !!req.file);
+    
     if (!req.file) {
+      console.error('No file in request');
       return res.status(400).json({
         success: false,
         message: 'Please upload an image'
@@ -268,10 +273,13 @@ exports.uploadProfilePic = async (req, res) => {
 
     tempFilePath = req.file.path;
     console.log('File received at:', tempFilePath);
+    console.log('File size:', req.file.size);
+    console.log('File mime type:', req.file.mimetype);
 
     const user = await User.findById(req.user.id);
 
     if (!user) {
+      console.error('User not found:', req.user.id);
       // Clean up temp file if user not found
       try {
         await fs.unlink(tempFilePath);
@@ -296,6 +304,7 @@ exports.uploadProfilePic = async (req, res) => {
       console.log('Cloudinary upload successful:', result.secure_url);
     } catch (cloudinaryError) {
       console.error('Cloudinary upload error:', cloudinaryError.message);
+      console.error('Full Cloudinary error:', cloudinaryError);
       return res.status(500).json({
         success: false,
         message: 'Failed to upload image to server: ' + cloudinaryError.message
@@ -303,6 +312,7 @@ exports.uploadProfilePic = async (req, res) => {
     }
 
     if (!result || !result.secure_url) {
+      console.error('Invalid Cloudinary response:', result);
       return res.status(500).json({
         success: false,
         message: 'Image upload returned invalid response'
@@ -312,14 +322,18 @@ exports.uploadProfilePic = async (req, res) => {
     user.profilePic = result.secure_url;
     await user.save();
     console.log('User profile picture updated:', user._id);
+    console.log('New profile picture URL:', result.secure_url);
 
+    console.log('=== PROFILE PIC UPLOAD SUCCESS ===');
     res.status(200).json({
       success: true,
       message: 'Profile picture uploaded successfully',
       profilePic: result.secure_url
     });
   } catch (error) {
-    console.error('Upload profile pic error:', error);
+    console.error('=== PROFILE PIC UPLOAD ERROR ===');
+    console.error('Error message:', error.message);
+    console.error('Error stack:', error.stack);
     res.status(500).json({
       success: false,
       message: error.message || 'Error uploading profile picture'
