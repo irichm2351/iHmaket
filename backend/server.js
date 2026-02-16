@@ -120,6 +120,19 @@ app.get('/api/cloudinary-check', (req, res) => {
   });
 });
 
+// Test auth route for debugging
+app.get('/api/auth/test', (req, res) => {
+  res.json({
+    status: 'OK',
+    message: 'Auth routes are working',
+    methods: {
+      POST: ['/login', '/register', '/upload-profile-pic', '/google-login', '/apple-login'],
+      GET: ['/me'],
+      PUT: ['/profile', '/change-password']
+    }
+  });
+});
+
 // Socket.io connection handling
 const onlineUsers = new Map();
 
