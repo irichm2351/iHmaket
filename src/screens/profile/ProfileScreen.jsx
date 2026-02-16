@@ -26,133 +26,88 @@ const ProfileScreen = () => {
         const image = result.assets[0];
         setUploadingImage(true);
 
-        console.log('\n=== STARTING PROFILE PICTURE UPLOAD ===\n');
-        console.log('Image selected:', {
-          uri: image.uri,
-          type: image.type,
-          fileName: image.fileName,
-        });
-
-        // Step 1: Get token
-        const token = await SecureStore.getItemAsync('authToken');
-        console.log('Token retrieved:', token ? '✅ YES' : '❌ NO');
-        
-        if (!token) {
-          throw new Error('No authentication token found. Please login again.');
-        }
-
-        // Step 2: Build URL
-        const uploadUrl = `${API_URL}/auth/upload-profile-pic`;
-        console.log('Upload URL:', uploadUrl);
-
-        // Step 3: Create FormData
-        const formData = new FormData();
-        formData.append('profilePic', {
-          uri: image.uri,
-          type: image.type || 'image/jpeg',
-          name: image.fileName || `profile-${Date.now()}.jpg`,
-        });
-        console.log('FormData created ✅');
-
-        // Step 4: Make request
-        console.log('\nSending request...');
-        console.log('Method: POST');
-        console.log('Headers:', {
-          'Authorization': `Bearer ${token.substring(0, 20)}...`,
-        });
-
-        const response = await fetch(uploadUrl, {
-          method: 'POST',
-          body: formData,
-          headers: {
-            'Authorization': `Bearer ${token}`,
-          },
-        });
-
-        // Step 5: Check response
-        console.log('\n=== RESPONSE RECEIVED ===\n');
-        console.log('Status:', response.status);
-        console.log('Status Text:', response.statusText);
-
-        // Step 6: Parse response
-        let responseData;
-        const responseText = await response.text();
-        console.log('Response text length:', responseText.length);
-        
         try {
-          responseData = JSON.parse(responseText);
-          console.log('Response parsed ✅');
-          console.log('Response data:', responseData);
-        } catch (parseError) {
-          console.error('Failed to parse response:', parseError.message);
-          console.error('Raw response:', responseText.substring(0, 200));
-          throw new Error(`Server returned invalid response: ${responseText.substring(0, 100)}`);
-        }
+          console.log('=== PROFILE PICTURE UPLOAD START ===');
+          console.log('Selected image:', {
+            uri: image.uri,
+            type: image.type,
+            fileName: image.fileName,
+          });
 
-        // Step 7: Check success
-        if (!response.ok) {
-          console.error('❌ Upload failed');
-          console.error('Status:', response.status);
-          console.error('Message:', responseData.message);
-          throw new Error(responseData.message || `Upload failed with status ${response.status}`);
-        }
+          const token = await SecureStore.getItemAsync('authToken');
+          if (!token) {
+            throw new Error('No authentication token found. Please login again.');
+          }
 
-        if (responseData.success && responseData.profilePic) {
-          console.log('✅ Upload successful!');
-          console.log('New profile picture URL:', responseData.profilePic);
+          const uploadUrl = `${API_URL}/auth/upload-profile-pic`;
           
-          setProfilePic(responseData.profilePic);
-          updateProfilePicture(responseData.profilePic);
+          console.log('Upload URL:', uploadUrl);
+          console.log('Token length:', token.length);
+
+          // Create FormData for upload
+          const formData = new FormData();
+          formData.append('profilePic', {
+            uri: image.uri,
+            type: image.type || 'image/jpeg',
+            name: image.fileName || `profile-${Date.now()}.jpg`,
+          });
+
+          console.log('Uploading file via fetch...');
+
+          const response = await fetch(uploadUrl, {
+            method: 'POST',
+            body: formData,
+            headers: {
+              'Authorization': `Bearer ${token}`,
+            },
+          });
+
+          console.log('Response status:', response.status);
+          console.log('Response ok:', response.ok);
+
+          if (!response.ok) {
+            const errorData = await response.json().catch(() => ({ message: 'Unknown error' }));
+            console.error('Server error:', errorData);
+            throw new Error(errorData.message || `Upload failed with status ${response.status}`);
+          }
+
+          const uploadData = await response.json();
+          console.log('Upload response:', uploadData);
+
+          if (uploadData.success && uploadData.profilePic) {
+            console.log('Upload successful!');
+            setProfilePic(uploadData.profilePic);
+            updateProfilePicture(uploadData.profilePic);
+            Alert.alert('Success', 'Profile picture updated successfully');
+            console.log('=== PROFILE PICTURE UPLOAD SUCCESS ===');
+          } else {
+            throw new Error(uploadData.message || 'Server response invalid');
+          }
+        } catch (error) {
+          console.error('=== UPLOAD ERROR ===');
+          console.error('Message:', error.message);
+          console.error('Type:', error.constructor.name);
           
-          console.log('\n=== UPLOAD COMPLETE ===\n');
-          Alert.alert('Success ✅', 'Profile picture updated successfully!');
-        } else {
-          throw new Error(responseData.message || 'Server returned success: false');
+          // Determine appropriate error message
+          let errorMessage = error.message;
+          if (error.message.includes('Network')) {
+            errorMessage = 'Network error - check your internet connection and server is online';
+          }
+          
+          Alert.alert('Upload Failed', errorMessage);
+        } finally {
+          setUploadingImage(false);
         }
       }
     } catch (error) {
-      console.error('\n=== ❌ UPLOAD ERROR ===\n');
-      console.error('Error type:', error.name);
-      console.error('Error message:', error.message);
-      console.error('Error stack:', error.stack);
-      console.error('\n');
-      
-      Alert.alert(
-        'Upload Failed ❌', 
-        error.message || 'Network error. Check your connection and try again.'
-      );
-    } finally {
+      console.error('ImagePicker error:', error);
+      Alert.alert('Error', 'Failed to pick image');
       setUploadingImage(false);
     }
   };
 
   const handleLogout = async () => {
     await logout();
-  };
-
-  const testConnection = async () => {
-    try {
-      console.log('\n=== TESTING BACKEND CONNECTION ===\n');
-      const testUrl = `${API_URL}/auth/test`;
-      console.log('Testing URL:', testUrl);
-      
-      const response = await fetch(testUrl);
-      const data = await response.json();
-      
-      console.log('✅ Connection successful!');
-      console.log('Response:', data);
-      
-      Alert.alert(
-        'Connection ✅',
-        'Backend is reachable and working correctly!'
-      );
-    } catch (error) {
-      console.error('❌ Connection failed:', error.message);
-      Alert.alert(
-        'Connection ❌',
-        'Cannot reach backend: ' + error.message
-      );
-    }
   };
 
   return (
@@ -248,12 +203,6 @@ const ProfileScreen = () => {
           <MaterialCommunityIcons name="chevron-right" size={20} color="#d1d5db" />
         </TouchableOpacity>
       </View>
-
-      {/* Test Connection Button */}
-      <TouchableOpacity style={styles.testButton} onPress={testConnection}>
-        <MaterialCommunityIcons name="wifi-check" size={20} color="#3b82f6" />
-        <Text style={styles.testButtonText}>Test Backend Connection</Text>
-      </TouchableOpacity>
 
       {/* Logout Button */}
       <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
@@ -363,26 +312,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
     color: '#ef4444',
-    marginLeft: 10,
-  },
-  testButton: {
-    flexDirection: 'row',
-    marginHorizontal: 20,
-    marginTop: 10,
-    marginBottom: 10,
-    paddingVertical: 12,
-    paddingHorizontal: 15,
-    backgroundColor: '#dbeafe',
-    borderRadius: 8,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#93c5fd',
-  },
-  testButtonText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#3b82f6',
     marginLeft: 10,
   },
 });

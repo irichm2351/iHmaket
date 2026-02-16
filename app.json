@@ -1,23 +1,30 @@
 {
   "expo": {
-    "name": "mkpservo",
-    "slug": "mkpservo",
+    "name": "Ihmaket",
+    "slug": "ihmaket",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "mkpservo",
+    "scheme": "ihmaket",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true
     },
     "android": {
+      "package": "com.ihmaket.app",
+      "versionCode": 1,
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
         "backgroundImage": "./assets/images/android-icon-background.png",
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
+      "permissions": [
+        "CAMERA",
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE"
+      ],
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false
     },
@@ -25,6 +32,10 @@
       "output": "static",
       "favicon": "./assets/images/favicon.png"
     },
+    "permissions": [
+      "camera",
+      "photo"
+    ],
     "plugins": [
       "expo-router",
       [
@@ -43,6 +54,12 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "084cb782-8cd0-4892-8a3c-8b5ea3fa0936"
+      }
     }
   }
 }
