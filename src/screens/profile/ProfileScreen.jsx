@@ -4,8 +4,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useAuthStore } from '../../store/authStore';
-import api, { API_URL } from '../../utils/api';
-import * as SecureStore from 'expo-secure-store';
+import api from '../../utils/api';
 
 const ProfileScreen = () => {
   const router = useRouter();
@@ -15,6 +14,13 @@ const ProfileScreen = () => {
 
   const pickAndUploadImage = async () => {
     try {
+      // Request permissions
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert('Permission Denied', 'Camera roll permissions are required');
+        return;
+      }
+
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
         allowsEditing: true,
@@ -22,86 +28,76 @@ const ProfileScreen = () => {
         quality: 0.8,
       });
 
-      if (!result.canceled) {
-        const image = result.assets[0];
-        setUploadingImage(true);
+      if (result.canceled) {
+        console.log('Image selection cancelled');
+        return;
+      }
 
-        try {
-          console.log('=== PROFILE PICTURE UPLOAD START ===');
-          console.log('Selected image:', {
-            uri: image.uri,
-            type: image.type,
-            fileName: image.fileName,
-          });
+      const image = result.assets[0];
+      setUploadingImage(true);
 
-          const token = await SecureStore.getItemAsync('authToken');
-          if (!token) {
-            throw new Error('No authentication token found. Please login again.');
-          }
+      console.log('=== PROFILE PICTURE UPLOAD START ===');
+      console.log('Selected image:', {
+        uri: image.uri,
+        type: image.type,
+        width: image.width,
+        height: image.height,
+      });
 
-          const uploadUrl = `${API_URL}/auth/upload-profile-pic`;
-          
-          console.log('Upload URL:', uploadUrl);
-          console.log('Token length:', token.length);
+      // Create FormData
+      const formData = new FormData();
+      formData.append('profilePic', {
+        uri: image.uri,
+        type: image.type || 'image/jpeg',
+        name: image.fileName || `profile-${Date.now()}.jpg`,
+      });
 
-          // Create FormData for upload
-          const formData = new FormData();
-          formData.append('profilePic', {
-            uri: image.uri,
-            type: image.type || 'image/jpeg',
-            name: image.fileName || `profile-${Date.now()}.jpg`,
-          });
+      console.log('Uploading via axios...');
 
-          console.log('Uploading file via fetch...');
+      // Use axios instance for upload
+      const response = await api.post('/auth/upload-profile-pic', formData, {
+        timeout: 60000, // 60 second timeout
+      });
 
-          const response = await fetch(uploadUrl, {
-            method: 'POST',
-            body: formData,
-            headers: {
-              'Authorization': `Bearer ${token}`,
-            },
-          });
+      console.log('=== UPLOAD RESPONSE ===');
+      console.log('Status:', response.status);
+      console.log('Data:', response.data);
 
-          console.log('Response status:', response.status);
-          console.log('Response ok:', response.ok);
-
-          if (!response.ok) {
-            const errorData = await response.json().catch(() => ({ message: 'Unknown error' }));
-            console.error('Server error:', errorData);
-            throw new Error(errorData.message || `Upload failed with status ${response.status}`);
-          }
-
-          const uploadData = await response.json();
-          console.log('Upload response:', uploadData);
-
-          if (uploadData.success && uploadData.profilePic) {
-            console.log('Upload successful!');
-            setProfilePic(uploadData.profilePic);
-            updateProfilePicture(uploadData.profilePic);
-            Alert.alert('Success', 'Profile picture updated successfully');
-            console.log('=== PROFILE PICTURE UPLOAD SUCCESS ===');
-          } else {
-            throw new Error(uploadData.message || 'Server response invalid');
-          }
-        } catch (error) {
-          console.error('=== UPLOAD ERROR ===');
-          console.error('Message:', error.message);
-          console.error('Type:', error.constructor.name);
-          
-          // Determine appropriate error message
-          let errorMessage = error.message;
-          if (error.message.includes('Network')) {
-            errorMessage = 'Network error - check your internet connection and server is online';
-          }
-          
-          Alert.alert('Upload Failed', errorMessage);
-        } finally {
-          setUploadingImage(false);
-        }
+      if (response.data.success && response.data.profilePic) {
+        console.log('✅ Upload Successful!');
+        console.log('Picture URL:', response.data.profilePic);
+        
+        // Update local state and auth store
+        setProfilePic(response.data.profilePic);
+        updateProfilePicture(response.data.profilePic);
+        
+        Alert.alert('Success', 'Profile picture updated successfully!');
+        console.log('=== PROFILE PICTURE UPLOAD SUCCESS ===');
+      } else {
+        throw new Error(response.data.message || 'Upload failed');
       }
     } catch (error) {
-      console.error('ImagePicker error:', error);
-      Alert.alert('Error', 'Failed to pick image');
+      console.error('=== UPLOAD ERROR ===');
+      console.error('Error message:', error.message);
+      console.error('Error response:', error.response?.data);
+      console.error('Error status:', error.response?.status);
+
+      let errorMessage = error.message;
+      
+      if (error.code === 'ECONNABORTED' || error.message.includes('timeout')) {
+        errorMessage = 'Upload timeout - server took too long to respond';
+      } else if (error.message.includes('Network') || error.code === 'NETWORK_ERROR') {
+        errorMessage = 'Network error - check your internet connection';
+      } else if (error.response?.status === 401) {
+        errorMessage = 'Authentication failed - please login again';
+      } else if (error.response?.status === 413) {
+        errorMessage = 'File is too large';
+      } else if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      }
+
+      Alert.alert('Upload Failed', errorMessage);
+    } finally {
       setUploadingImage(false);
     }
   };

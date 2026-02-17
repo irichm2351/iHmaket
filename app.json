@@ -58,8 +58,9 @@
     "extra": {
       "router": {},
       "eas": {
-        "projectId": "084cb782-8cd0-4892-8a3c-8b5ea3fa0936"
+        "projectId": "85607599-e22c-4cfb-821e-2d6985b1f786"
       }
-    }
+    },
+    "owner": "irichm"
   }
 }

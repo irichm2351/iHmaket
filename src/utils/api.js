@@ -13,6 +13,14 @@ const api = axios.create({
   timeout: 30000, // 30 seconds
 });
 
+const isFormDataRequest = (data) => {
+  if (!data) return false;
+  if (typeof FormData !== 'undefined' && data instanceof FormData) return true;
+  if (typeof data.getParts === 'function') return true;
+  if (Array.isArray(data._parts)) return true;
+  return false;
+};
+
 // Request interceptor to add token
 api.interceptors.request.use(
   async (config) => {
@@ -23,7 +31,7 @@ api.interceptors.request.use(
     
     // Don't override Content-Type for FormData (file uploads)
     // Let axios handle it automatically
-    if (!(config.data instanceof FormData)) {
+    if (!isFormDataRequest(config.data)) {
       if (!config.headers['Content-Type']) {
         config.headers['Content-Type'] = 'application/json';
       }
@@ -31,7 +39,7 @@ api.interceptors.request.use(
     
     // Log request details
     console.log(`API Request: ${config.method.toUpperCase()} ${config.baseURL}${config.url}`);
-    if (config.data && !(config.data instanceof FormData)) {
+    if (config.data && !isFormDataRequest(config.data)) {
       console.log('Request data:', config.data);
     }
     
