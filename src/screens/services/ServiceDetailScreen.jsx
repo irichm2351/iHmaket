@@ -236,7 +236,8 @@ const ServiceDetailScreen = ({ route, serviceId }) => {
   const getImageUrl = (url) => {
     if (!url) return null;
     if (url.startsWith('http')) return url;
-    const baseUrl = 'https://ihmaket-backend.onrender.com';
+    const apiBase = process.env.EXPO_PUBLIC_API_URL || 'https://ihmaket-backend.onrender.com/api';
+    const baseUrl = apiBase.replace('/api', '');
     return `${baseUrl}${url}`;
   };
 

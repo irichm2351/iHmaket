@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, ActivityIndicator, Alert } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
+import * as FileSystem from 'expo-file-system';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useAuthStore } from '../../store/authStore';
@@ -34,28 +35,44 @@ const ProfileScreen = () => {
       }
 
       const image = result.assets[0];
+      const originalUri = image.uri;
+      let uploadUri = originalUri;
+
+      // Android can return content:// URIs which break uploads. Copy to cache.
+      if (originalUri.startsWith('content://')) {
+        const extension = (originalUri.split('.').pop() || 'jpg').split('?')[0];
+        const cachePath = `${FileSystem.cacheDirectory}profile-${Date.now()}.${extension}`;
+        await FileSystem.copyAsync({ from: originalUri, to: cachePath });
+        uploadUri = cachePath;
+      }
       setUploadingImage(true);
 
       console.log('=== PROFILE PICTURE UPLOAD START ===');
       console.log('Selected image:', {
-        uri: image.uri,
+        uri: originalUri,
+        uploadUri,
         type: image.type,
+        mimeType: image.mimeType,
         width: image.width,
         height: image.height,
       });
 
       // Create FormData
       const formData = new FormData();
+      const mimeType = image.mimeType || (image.type && image.type !== 'image' ? image.type : null) || 'image/jpeg';
+      const filename = image.fileName || `profile-${Date.now()}.jpg`;
+
       formData.append('profilePic', {
-        uri: image.uri,
-        type: image.type || 'image/jpeg',
-        name: image.fileName || `profile-${Date.now()}.jpg`,
+        uri: uploadUri,
+        type: mimeType,
+        name: filename,
       });
 
       console.log('Uploading via axios...');
 
-      // Use axios instance for upload
+      // Use axios instance for upload with explicit multipart header (matching web version)
       const response = await api.post('/auth/upload-profile-pic', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
         timeout: 60000, // 60 second timeout
       });
 
@@ -99,6 +116,35 @@ const ProfileScreen = () => {
       Alert.alert('Upload Failed', errorMessage);
     } finally {
       setUploadingImage(false);
+    }
+  };
+
+  const testBackendConnection = async () => {
+    try {
+      console.log('\n=== TESTING BACKEND CONNECTION ===');
+      console.log('API URL:', api.defaults.baseURL);
+      
+      // Get token from secure store
+      const token = await require('expo-secure-store').getItemAsync('authToken');
+      console.log('Auth token present:', !!token);
+      console.log('User ID:', user?.id);
+      
+      // Test simple GET request to health endpoint
+      const response = await api.get('/health');
+      console.log('Health check response:', response.data);
+      
+      Alert.alert('✅ Backend Connected', 'Backend is reachable and responding correctly!');
+    } catch (error) {
+      console.error('=== CONNECTION TEST ERROR ===');
+      console.error('Error:', error.message);
+      console.error('Status:', error.response?.status);
+      console.error('Data:', error.response?.data);
+      
+      Alert.alert('❌ Connection Error', 
+        `Cannot reach backend: ${error.message}\n\n` +
+        `Status: ${error.response?.status || 'N/A'}\n` +
+        `Check: Is backend running? Is URL correct?`
+      );
     }
   };
 
@@ -197,6 +243,18 @@ const ProfileScreen = () => {
             <Text style={styles.optionDesc}>View our policies</Text>
           </View>
           <MaterialCommunityIcons name="chevron-right" size={20} color="#d1d5db" />
+        </TouchableOpacity>
+
+        <TouchableOpacity 
+          style={[styles.optionItem, {backgroundColor: '#eff6ff', borderLeftWidth: 3, borderLeftColor: '#3b82f6'}]}
+          onPress={testBackendConnection}
+        >
+          <MaterialCommunityIcons name="wifi" size={20} color="#0284c7" />
+          <View style={styles.optionContent}>
+            <Text style={styles.optionTitle}>Test Backend Connection</Text>
+            <Text style={styles.optionDesc}>Verify API is reachable</Text>
+          </View>
+          <MaterialCommunityIcons name="chevron-right" size={20} color="#0284c7" />
         </TouchableOpacity>
       </View>
 
