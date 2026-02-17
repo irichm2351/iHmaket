@@ -11,6 +11,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   Linking,
+  Image,
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import * as AuthSession from 'expo-auth-session';
@@ -143,9 +144,11 @@ const LoginScreen = () => {
       {/* Logo/Header */}
       <View style={styles.headerSection}>
         <View style={styles.logoContainer}>
-          <View style={styles.mkpLogo}>
-            <Text style={styles.mkpText}>iH</Text>
-          </View>
+          <Image 
+            source={require('../../../assets/images/iHlogo1.jpg')}
+            style={styles.mkpLogo}
+            resizeMode="contain"
+          />
           <Text style={styles.servoText}>maket</Text>
         </View>
         <Text style={styles.tagline}>Find trusted professionals</Text>
@@ -297,16 +300,9 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   mkpLogo: {
-    backgroundColor: '#3b82f6',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderRadius: 8,
-    marginRight: 8,
-  },
-  mkpText: {
-    fontSize: 26,
-    fontWeight: 'bold',
-    color: 'white',
+    width: 70,
+    height: 70,
+    marginRight: -12,
   },
   servoText: {
     fontSize: 26,

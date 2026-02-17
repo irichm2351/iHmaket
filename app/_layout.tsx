@@ -77,6 +77,9 @@ export default function RootLayout() {
     if (user && inAuthGroup) {
       // Redirect to tabs if authenticated and trying to access auth
       router.replace('/(tabs)');
+    } else if (!user && !inAuthGroup) {
+      // Redirect to auth if not authenticated and trying to access protected routes
+      router.replace('/(auth)/login');
     }
   }, [user, segments, isReady]);
 
