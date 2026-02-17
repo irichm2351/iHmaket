@@ -80,6 +80,25 @@ app.use('/uploads', (req, res, next) => {
 // Make io accessible to routes
 app.set('io', io);
 
+// Debug middleware: Log all requests
+app.use((req, res, next) => {
+  console.log(`\n📨 ${req.method} ${req.url}`);
+  console.log('   Headers:', {
+    'content-type': req.headers['content-type'],
+    'authorization': req.headers['authorization'] ? '✓ Present' : '✗ Missing',
+    'origin': req.headers['origin'] || 'not specified',
+    'user-agent': req.headers['user-agent']
+  });
+  
+  // Log body for upload endpoints
+  if (req.url.includes('upload')) {
+    console.log('   Upload endpoint detected');
+    console.log('   Files:', req.files ? 'Yes' : 'No');
+    console.log('   File object:', req.file ? `${req.file.fieldname} (${req.file.size} bytes)` : 'No single file');
+  }
+  next();
+});
+
 // Database connection
 mongoose.connect(process.env.MONGODB_URI)
 .then(() => console.log('✅ MongoDB Connected Successfully'))
