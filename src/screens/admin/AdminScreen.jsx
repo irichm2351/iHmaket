@@ -12,8 +12,6 @@ import {
   TextInput,
   RefreshControl,
   Image,
-  KeyboardAvoidingView,
-  Platform,
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
@@ -320,6 +318,7 @@ const AdminScreen = () => {
     return (
       <ScrollView
         style={styles.container}
+        keyboardShouldPersistTaps="handled"
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
       >
         {/* Header */}
@@ -440,11 +439,7 @@ const AdminScreen = () => {
             </TouchableOpacity>
 
             {/* Subscription Control */}
-            <KeyboardAvoidingView
-              behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-              keyboardVerticalOffset={100}
-            >
-              <View style={styles.subscriptionCard}>
+            <View style={styles.subscriptionCard}>
               <View style={styles.subscriptionHeader}>
                 <Text style={styles.subscriptionTitle}>Provider Subscription</Text>
                 <Text style={styles.subscriptionSubtitle}>Enable or disable subscriptions</Text>
@@ -517,7 +512,6 @@ const AdminScreen = () => {
                 </View>
               )}
               </View>
-            </KeyboardAvoidingView>
           </>
         ) : null}
       </ScrollView>
