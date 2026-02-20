@@ -12,6 +12,8 @@ import {
   TextInput,
   RefreshControl,
   Image,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
@@ -316,11 +318,15 @@ const AdminScreen = () => {
   // Dashboard View
   if (view === 'dashboard') {
     return (
-      <ScrollView
-        style={styles.container}
-        keyboardShouldPersistTaps="handled"
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={{ flex: 1 }}
       >
+        <ScrollView
+          style={styles.container}
+          keyboardShouldPersistTaps="handled"
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+        >
         {/* Header */}
         <View style={styles.header}>
           <View style={styles.headerContent}>
@@ -515,6 +521,7 @@ const AdminScreen = () => {
           </>
         ) : null}
       </ScrollView>
+      </KeyboardAvoidingView>
     );
   }
 
@@ -1241,7 +1248,7 @@ const styles = StyleSheet.create({
     padding: 16,
     marginHorizontal: 16,
     marginTop: 10,
-    marginBottom: 20,
+    marginBottom: 100,
     borderWidth: 1,
     borderColor: '#e5e7eb',
     shadowColor: '#1f2937',
