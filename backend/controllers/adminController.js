@@ -480,7 +480,36 @@ exports.updateSubscriptionSettings = async (req, res) => {
     setting.updatedBy = req.user._id;
     await setting.save();
 
-    if (!wasEnabled && setting.enabled) {
+    // Handle subscription enable/disable logic
+    if (wasEnabled && !setting.enabled) {
+      // Admin disabled subscriptions - remove subscription from all providers
+      await User.updateMany(
+        { role: 'provider' },
+        {
+          $set: {
+            subscriptionStatus: 'inactive',
+            subscriptionExpiresAt: null
+          }
+        }
+      );
+
+      const adminUser = await User.findById(req.user._id);
+      const providers = await User.find({ role: 'provider', isActive: true }).select('_id');
+
+      if (adminUser && providers.length > 0) {
+        const messageText = `Important update: Provider subscriptions have been disabled. Your services are now visible to all customers. You no longer need an active subscription to display your services.`;
+
+        const messages = providers.map((provider) => ({
+          conversationId: Message.generateConversationId(adminUser._id, provider._id),
+          senderId: adminUser._id,
+          receiverId: provider._id,
+          text: messageText
+        }));
+
+        await Message.insertMany(messages);
+      }
+    } else if (!wasEnabled && setting.enabled) {
+      // Admin enabled subscriptions - notify all providers
       const adminUser = await User.findById(req.user._id);
       const providers = await User.find({ role: 'provider', isActive: true }).select('_id');
 
