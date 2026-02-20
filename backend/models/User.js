@@ -67,6 +67,33 @@ const userSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Service'
   }],
+  subscriptionStatus: {
+    type: String,
+    enum: ['active', 'inactive'],
+    default: 'inactive'
+  },
+  subscriptionExpiresAt: {
+    type: Date
+  },
+  subscriptionReference: {
+    type: String,
+    default: ''
+  },
+  subscriptionProvider: {
+    type: String,
+    default: 'paystack'
+  },
+  subscriptionAmount: {
+    type: Number,
+    default: 0
+  },
+  subscriptionCurrency: {
+    type: String,
+    default: 'NGN'
+  },
+  subscriptionUpdatedAt: {
+    type: Date
+  },
   isActive: {
     type: Boolean,
     default: true

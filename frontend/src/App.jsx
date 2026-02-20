@@ -21,6 +21,7 @@ import Profile from './pages/Profile';
 import AdminDashboard from './pages/AdminDashboard';
 import KYC from './pages/KYC';
 import About from './pages/About';
+import Subscription from './pages/Subscription';
 
 // Protected Route Component
 const ProtectedRoute = ({ children, requireProvider, requireAdmin }) => {
@@ -97,6 +98,14 @@ function App() {
           element={
             <ProtectedRoute>
               <Profile />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="subscription"
+          element={
+            <ProtectedRoute>
+              <Subscription />
             </ProtectedRoute>
           }
         />

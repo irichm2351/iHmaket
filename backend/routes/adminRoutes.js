@@ -23,4 +23,8 @@ router.get('/kyc/:id', adminController.getKycSubmission);
 router.put('/kyc/:id/approve', adminController.approveKyc);
 router.put('/kyc/:id/reject', adminController.rejectKyc);
 
+// Subscription settings
+router.get('/subscription-settings', adminController.getSubscriptionSettings);
+router.put('/subscription-settings', adminController.updateSubscriptionSettings);
+
 module.exports = router;

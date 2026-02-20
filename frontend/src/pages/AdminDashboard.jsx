@@ -29,6 +29,14 @@ const AdminDashboard = () => {
   const [recipientType, setRecipientType] = useState('all'); // 'all', 'providers', 'customers', 'individual'
   const [selectedUsers, setSelectedUsers] = useState([]);
   const [showUserSelector, setShowUserSelector] = useState(false);
+  const [subscriptionSettings, setSubscriptionSettings] = useState({
+    enabled: false,
+    amount: 2000,
+    currency: 'NGN',
+    interval: 'monthly'
+  });
+  const [subscriptionLoading, setSubscriptionLoading] = useState(false);
+  const [subscriptionSaving, setSubscriptionSaving] = useState(false);
   const limit = 10;
 
   const toggleKycExpand = (id) => {
@@ -46,6 +54,8 @@ const AdminDashboard = () => {
       fetchKycSubmissions();
     } else if (activeTab === 'reports') {
       fetchReports();
+    } else if (activeTab === 'subscription') {
+      fetchSubscriptionSettings();
     }
   }, [search, role, status, page, activeTab, kycStatus, reportStatus]);
 
@@ -62,6 +72,54 @@ const AdminDashboard = () => {
       }
     } catch (error) {
       console.error('Error fetching stats:', error);
+    }
+  };
+
+  const fetchSubscriptionSettings = async () => {
+    try {
+      setSubscriptionLoading(true);
+      const token = getAuthToken();
+      const response = await fetch(
+        `${API_URL}/admin/subscription-settings`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      const data = await response.json();
+      if (data.success) {
+        setSubscriptionSettings(data.settings);
+      }
+    } catch (error) {
+      toast.error('Error fetching subscription settings');
+    } finally {
+      setSubscriptionLoading(false);
+    }
+  };
+
+  const handleSaveSubscriptionSettings = async () => {
+    try {
+      setSubscriptionSaving(true);
+      const token = getAuthToken();
+      const response = await fetch(
+        `${API_URL}/admin/subscription-settings`,
+        {
+          method: 'PUT',
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(subscriptionSettings)
+        }
+      );
+      const data = await response.json();
+      if (data.success) {
+        toast.success('Subscription settings updated');
+        setSubscriptionSettings(data.settings);
+      } else {
+        toast.error(data.message || 'Failed to update settings');
+      }
+    } catch (error) {
+      toast.error('Error updating subscription settings');
+    } finally {
+      setSubscriptionSaving(false);
     }
   };
 
@@ -465,7 +523,7 @@ const AdminDashboard = () => {
 
         {/* Tabs */}
         <div className="bg-white rounded-lg shadow-sm mb-6">
-          <div className="flex border-b">
+          <div className="flex flex-wrap gap-2 border-b overflow-x-auto">
             <button
               onClick={() => {
                 setActiveTab('users');
@@ -523,6 +581,19 @@ const AdminDashboard = () => {
             >
               <FiMessageSquare className="inline mr-2" />
               Send Message to Users
+            </button>
+            <button
+              onClick={() => {
+                setActiveTab('subscription');
+                setPage(1);
+              }}
+              className={`px-6 py-3 font-medium transition ${
+                activeTab === 'subscription'
+                  ? 'border-b-2 border-blue-600 text-blue-600'
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              Subscription Control
             </button>
           </div>
         </div>
@@ -619,6 +690,102 @@ const AdminDashboard = () => {
                   <option value="all">All</option>
                 </select>
               </div>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'subscription' && (
+          <div className="bg-white p-6 rounded-lg shadow-sm mb-6">
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h2 className="text-xl font-semibold text-gray-900">Provider Subscription</h2>
+                <p className="text-gray-600">Enable or disable provider subscriptions</p>
+              </div>
+            </div>
+
+            {subscriptionLoading ? (
+              <div className="py-8">
+                <Loader size="md" />
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Subscription Status</label>
+                  <div className="flex items-center gap-3">
+                    <input
+                      id="subscription-enabled"
+                      type="checkbox"
+                      checked={subscriptionSettings.enabled}
+                      onChange={(e) =>
+                        setSubscriptionSettings({
+                          ...subscriptionSettings,
+                          enabled: e.target.checked
+                        })
+                      }
+                      className="h-4 w-4 text-blue-600 border-gray-300 rounded"
+                    />
+                    <label htmlFor="subscription-enabled" className="text-sm text-gray-700">
+                      {subscriptionSettings.enabled ? 'Enabled' : 'Disabled'}
+                    </label>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Monthly Amount (NGN)</label>
+                  <input
+                    type="number"
+                    value={subscriptionSettings.amount}
+                    onChange={(e) =>
+                      setSubscriptionSettings({
+                        ...subscriptionSettings,
+                        amount: Number(e.target.value)
+                      })
+                    }
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Currency</label>
+                  <input
+                    type="text"
+                    value={subscriptionSettings.currency}
+                    onChange={(e) =>
+                      setSubscriptionSettings({
+                        ...subscriptionSettings,
+                        currency: e.target.value.toUpperCase()
+                      })
+                    }
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Interval</label>
+                  <select
+                    value={subscriptionSettings.interval}
+                    onChange={(e) =>
+                      setSubscriptionSettings({
+                        ...subscriptionSettings,
+                        interval: e.target.value
+                      })
+                    }
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="monthly">Monthly</option>
+                  </select>
+                </div>
+              </div>
+            )}
+
+            <div className="mt-6">
+              <button
+                onClick={handleSaveSubscriptionSettings}
+                disabled={subscriptionSaving}
+                className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition disabled:bg-gray-400"
+              >
+                {subscriptionSaving ? 'Saving...' : 'Save Settings'}
+              </button>
             </div>
           </div>
         )}

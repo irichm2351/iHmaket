@@ -2,6 +2,7 @@ const Service = require('../models/Service');
 const User = require('../models/User');
 const Booking = require('../models/Booking');
 const cloudinary = require('../config/cloudinary');
+const { getSubscriptionSetting, isSubscriptionActive } = require('../middleware/subscription');
 const fs = require('fs');
 const path = require('path');
 
@@ -34,6 +35,16 @@ const normalizeServiceImages = (service) => {
     return { ...img, url: buildImageUrl(img.url) };
   });
   return data;
+};
+
+const isProviderVisible = (provider, setting) => {
+  if (!provider || !provider.isActive || provider.isRestricted) {
+    return false;
+  }
+  if (!setting?.enabled) {
+    return true;
+  }
+  return isSubscriptionActive(provider);
 };
 
 // @desc    Create a new service
@@ -164,6 +175,7 @@ exports.createService = async (req, res) => {
 // @access  Public
 exports.getServices = async (req, res) => {
   try {
+    const subscriptionSetting = await getSubscriptionSetting();
     const { 
       search, 
       category, 
@@ -223,7 +235,7 @@ exports.getServices = async (req, res) => {
     const services = await Service.find(query)
       .populate({
         path: 'providerId',
-        select: 'name profilePic rating location isActive isRestricted',
+        select: 'name profilePic rating location isActive isRestricted subscriptionStatus subscriptionExpiresAt',
         match: { isActive: true, isRestricted: false }
       })
       .sort(sortOption)
@@ -231,8 +243,8 @@ exports.getServices = async (req, res) => {
       .limit(Number(limit))
       .lean();
 
-    // Filter out services where provider is inactive or restricted
-    const filteredServices = services.filter(service => service.providerId !== null);
+    // Filter out services where provider is inactive, restricted, or unsubscribed
+    const filteredServices = services.filter(service => isProviderVisible(service.providerId, subscriptionSetting));
 
     const total = await Service.countDocuments(query);
     const filteredTotal = filteredServices.length;
@@ -264,8 +276,9 @@ exports.getServices = async (req, res) => {
 // @access  Public
 exports.getServiceById = async (req, res) => {
   try {
+    const subscriptionSetting = await getSubscriptionSetting();
     const service = await Service.findById(req.params.id)
-      .populate('providerId', 'name profilePic rating totalReviews bio location phone email isActive isRestricted');
+      .populate('providerId', 'name profilePic rating totalReviews bio location phone email isActive isRestricted subscriptionStatus subscriptionExpiresAt');
 
     if (!service) {
       return res.status(404).json({
@@ -276,6 +289,13 @@ exports.getServiceById = async (req, res) => {
 
     // Check if provider is active and not restricted
     if (!service.providerId || !service.providerId.isActive || service.providerId.isRestricted) {
+      return res.status(404).json({
+        success: false,
+        message: 'Service not available'
+      });
+    }
+
+    if (subscriptionSetting.enabled && !isSubscriptionActive(service.providerId)) {
       return res.status(404).json({
         success: false,
         message: 'Service not available'
@@ -523,15 +543,29 @@ exports.deleteService = async (req, res) => {
 exports.getServicesByProvider = async (req, res) => {
   try {
     const { providerId } = req.params;
+    const subscriptionSetting = await getSubscriptionSetting();
     
     // Get provider to check status
-    const provider = await User.findById(providerId).select('isActive isRestricted');
+    const provider = await User.findById(providerId)
+      .select('isActive isRestricted subscriptionStatus subscriptionExpiresAt');
     
     // If viewing another provider's services (customer view), check if provider is active
     if (req.user?._id.toString() !== providerId && (!provider || !provider.isActive || provider.isRestricted)) {
       return res.json({
         success: true,
         services: [] // Return empty list if provider is inactive/restricted
+      });
+    }
+
+    if (
+      req.user?._id.toString() !== providerId &&
+      subscriptionSetting.enabled &&
+      provider &&
+      !isSubscriptionActive(provider)
+    ) {
+      return res.json({
+        success: true,
+        services: []
       });
     }
 
@@ -558,6 +592,7 @@ exports.getServicesByProvider = async (req, res) => {
 // @access  Public
 exports.getFeaturedServices = async (req, res) => {
   try {
+    const subscriptionSetting = await getSubscriptionSetting();
     // First try to get featured services
     let services = await Service.find({ 
       isFeatured: true, 
@@ -565,14 +600,14 @@ exports.getFeaturedServices = async (req, res) => {
     })
       .populate({
         path: 'providerId',
-        select: 'name profilePic rating isActive isRestricted',
+        select: 'name profilePic rating isActive isRestricted subscriptionStatus subscriptionExpiresAt',
         match: { isActive: true, isRestricted: false }
       })
       .sort({ rating: -1 })
       .limit(8);
 
-    // Filter out services where provider is inactive or restricted
-    services = services.filter(service => service.providerId !== null);
+    // Filter out services where provider is inactive, restricted, or unsubscribed
+    services = services.filter(service => isProviderVisible(service.providerId, subscriptionSetting));
 
     // If no featured services, show top-rated/most popular services
     if (services.length === 0) {
@@ -581,14 +616,14 @@ exports.getFeaturedServices = async (req, res) => {
       })
         .populate({
           path: 'providerId',
-          select: 'name profilePic rating isActive isRestricted',
+          select: 'name profilePic rating isActive isRestricted subscriptionStatus subscriptionExpiresAt',
           match: { isActive: true, isRestricted: false }
         })
         .sort({ rating: -1, views: -1, createdAt: -1 })
         .limit(8);
 
-      // Filter out services where provider is inactive or restricted
-      services = services.filter(service => service.providerId !== null);
+      // Filter out services where provider is inactive, restricted, or unsubscribed
+      services = services.filter(service => isProviderVisible(service.providerId, subscriptionSetting));
     }
 
     const servicesWithImages = services.map((service) => normalizeServiceImages(service));

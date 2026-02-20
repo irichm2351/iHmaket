@@ -21,6 +21,7 @@ const reviewRoutes = require('./routes/reviewRoutes');
 const messageRoutes = require('./routes/messageRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 const reportRoutes = require('./routes/reportRoutes');
+const subscriptionRoutes = require('./routes/subscriptionRoutes');
 
 // Initialize Express app
 const app = express();
@@ -62,6 +63,9 @@ app.use(cors({
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
+
+// Paystack webhook requires raw body for signature verification
+app.use('/api/subscription/webhook', express.raw({ type: 'application/json' }));
 
 // Increase limits for file uploads
 app.use(express.json({ limit: '50mb' }));
@@ -113,6 +117,7 @@ app.use('/api/reviews', reviewRoutes);
 app.use('/api/messages', messageRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/reports', reportRoutes);
+app.use('/api/subscription', subscriptionRoutes);
 
 // Health check route
 app.get('/api/health', (req, res) => {

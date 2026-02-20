@@ -1,6 +1,8 @@
 const User = require('../models/User');
 const Service = require('../models/Service');
 const Booking = require('../models/Booking');
+const SubscriptionSetting = require('../models/SubscriptionSetting');
+const Message = require('../models/Message');
 
 // @desc    Get all users
 // @route   GET /api/admin/users
@@ -413,6 +415,103 @@ exports.rejectKyc = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Error rejecting KYC',
+      error: error.message
+    });
+  }
+};
+
+// @desc    Get subscription settings
+// @route   GET /api/admin/subscription-settings
+// @access  Private/Admin
+exports.getSubscriptionSettings = async (req, res) => {
+  try {
+    let setting = await SubscriptionSetting.findOne();
+    if (!setting) {
+      setting = await SubscriptionSetting.create({
+        updatedBy: req.user._id
+      });
+    }
+
+    res.json({
+      success: true,
+      settings: {
+        enabled: setting.enabled,
+        amount: setting.amount,
+        currency: setting.currency,
+        interval: setting.interval
+      }
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching subscription settings',
+      error: error.message
+    });
+  }
+};
+
+// @desc    Update subscription settings
+// @route   PUT /api/admin/subscription-settings
+// @access  Private/Admin
+exports.updateSubscriptionSettings = async (req, res) => {
+  try {
+    const { enabled, amount, currency, interval } = req.body;
+
+    let setting = await SubscriptionSetting.findOne();
+    if (!setting) {
+      setting = await SubscriptionSetting.create({});
+    }
+
+    const wasEnabled = setting.enabled;
+
+    if (typeof enabled === 'boolean') {
+      setting.enabled = enabled;
+    }
+    if (amount !== undefined) {
+      setting.amount = Number(amount);
+    }
+    if (currency) {
+      setting.currency = currency;
+    }
+    if (interval) {
+      setting.interval = interval;
+    }
+
+    setting.updatedBy = req.user._id;
+    await setting.save();
+
+    if (!wasEnabled && setting.enabled) {
+      const adminUser = await User.findById(req.user._id);
+      const providers = await User.find({ role: 'provider', isActive: true }).select('_id');
+
+      if (adminUser && providers.length > 0) {
+        const messageText = `Important update: Provider subscriptions are now required. Your service ads will be hidden from customers until you subscribe. Please go to the Subscription page to activate your monthly plan.`;
+
+        const messages = providers.map((provider) => ({
+          conversationId: Message.generateConversationId(adminUser._id, provider._id),
+          senderId: adminUser._id,
+          receiverId: provider._id,
+          text: messageText
+        }));
+
+        await Message.insertMany(messages);
+      }
+    }
+
+    res.json({
+      success: true,
+      message: 'Subscription settings updated',
+      settings: {
+        enabled: setting.enabled,
+        amount: setting.amount,
+        currency: setting.currency,
+        interval: setting.interval
+      }
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Error updating subscription settings',
       error: error.message
     });
   }

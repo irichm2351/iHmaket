@@ -135,7 +135,12 @@ const PostService = () => {
       toast.success('Service posted successfully!');
       navigate('/dashboard');
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Failed to post service');
+      if (error.response?.status === 402) {
+        toast.error(error.response?.data?.message || 'Subscription required');
+        navigate('/subscription');
+      } else {
+        toast.error(error.response?.data?.message || 'Failed to post service');
+      }
     } finally {
       setLoading(false);
     }

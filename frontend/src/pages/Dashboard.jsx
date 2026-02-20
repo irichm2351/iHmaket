@@ -3,7 +3,7 @@ import { FiCalendar, FiMessageSquare, FiHeart, FiPlus, FiStar, FiEye, FiEdit2, F
 import { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
 import useAuthStore from '../store/authStore';
-import { serviceAPI, bookingAPI } from '../utils/api';
+import api, { serviceAPI, bookingAPI } from '../utils/api';
 import Loader from '../components/Loader';
 
 const Dashboard = () => {
@@ -16,10 +16,25 @@ const Dashboard = () => {
   const [recentServices, setRecentServices] = useState([]);
   const [recentBookings, setRecentBookings] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [subscriptionStatus, setSubscriptionStatus] = useState(null);
 
   useEffect(() => {
     fetchDashboardData();
+    if (user.role === 'provider') {
+      fetchSubscriptionStatus();
+    }
   }, []);
+
+  const fetchSubscriptionStatus = async () => {
+    try {
+      const response = await api.get('/subscription/status');
+      if (response.data.success) {
+        setSubscriptionStatus(response.data.status);
+      }
+    } catch (error) {
+      console.error('Error fetching subscription status:', error);
+    }
+  };
 
   const fetchDashboardData = async () => {
     try {
@@ -57,6 +72,30 @@ const Dashboard = () => {
     }
   };
 
+  const subscriptionBlocked =
+    subscriptionStatus?.enabled &&
+    subscriptionStatus?.isProvider &&
+    !subscriptionStatus?.isActive;
+
+  const handleSubscriptionGate = (event) => {
+    if (subscriptionBlocked) {
+      event.preventDefault();
+      toast.error('Subscription required to access provider features');
+    }
+  };
+
+  const getSubscriptionBadgeText = () => {
+    if (!subscriptionStatus?.isActive || !subscriptionStatus?.expiresAt) {
+      return null;
+    }
+    const expiryDate = new Date(subscriptionStatus.expiresAt).toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric'
+    });
+    return `Active until ${expiryDate}`;
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -75,6 +114,12 @@ const Dashboard = () => {
         <p className="text-gray-600">
           {user.role === 'provider' ? 'Manage your services and bookings' : 'Track your bookings and saved services'}
         </p>
+        {user.role === 'provider' && subscriptionStatus?.isActive && (
+          <div className="inline-flex items-center gap-2 mt-3 px-3 py-1 bg-emerald-50 text-emerald-700 rounded-full text-sm font-semibold">
+            <span className="inline-block h-2 w-2 rounded-full bg-emerald-500"></span>
+            {getSubscriptionBadgeText()}
+          </div>
+        )}
       </div>
 
       {/* Warning for customers or unverified providers */}
@@ -92,6 +137,25 @@ const Dashboard = () => {
           >
             {user.role === 'customer' ? 'Become Service Provider' : 'Complete KYC Verification'}
           </Link>
+        </div>
+      )}
+
+      {user.role === 'provider' && subscriptionBlocked && (
+        <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-8">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+            <div>
+              <h3 className="font-semibold text-amber-900 mb-1">Subscription Required</h3>
+              <p className="text-amber-800 text-sm">
+                Provider features are blocked until you subscribe.
+              </p>
+            </div>
+            <Link
+              to="/subscription"
+              className="inline-block px-4 py-2 bg-amber-600 text-white rounded hover:bg-amber-700 text-sm"
+            >
+              Subscribe Now
+            </Link>
+          </div>
         </div>
       )}
 
@@ -164,8 +228,11 @@ const Dashboard = () => {
 
         {user.role === 'provider' && (
           <Link
-            to="/post-service"
-            className="card p-6 text-center hover:shadow-lg transition bg-primary-50"
+            to={subscriptionBlocked ? '/subscription' : '/post-service'}
+            onClick={handleSubscriptionGate}
+            className={`card p-6 text-center hover:shadow-lg transition ${
+              subscriptionBlocked ? 'bg-gray-100 text-gray-400' : 'bg-primary-50'
+            }`}
           >
             <FiPlus className="mx-auto mb-3 text-primary-600" size={32} />
             <h3 className="font-semibold text-primary-600">Post New Service</h3>
@@ -182,8 +249,13 @@ const Dashboard = () => {
               <p className="text-gray-600 text-sm mt-1">Manage and monitor your posted services</p>
             </div>
             <Link 
-              to="/post-service"
-              className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition inline-flex items-center gap-2"
+              to={subscriptionBlocked ? '/subscription' : '/post-service'}
+              onClick={handleSubscriptionGate}
+              className={`px-4 py-2 rounded-lg transition inline-flex items-center gap-2 ${
+                subscriptionBlocked
+                  ? 'bg-gray-300 text-gray-600'
+                  : 'bg-primary-600 text-white hover:bg-primary-700'
+              }`}
             >
               <FiPlus size={18} />
               New Service

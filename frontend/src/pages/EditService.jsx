@@ -173,7 +173,12 @@ const EditService = () => {
       toast.success('Service updated successfully!');
       navigate('/dashboard');
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Failed to update service');
+      if (error.response?.status === 402) {
+        toast.error(error.response?.data?.message || 'Subscription required');
+        navigate('/subscription');
+      } else {
+        toast.error(error.response?.data?.message || 'Failed to update service');
+      }
     } finally {
       setSubmitting(false);
     }
@@ -190,7 +195,12 @@ const EditService = () => {
       toast.success('Service deleted successfully!');
       navigate('/dashboard');
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Failed to delete service');
+      if (error.response?.status === 402) {
+        toast.error(error.response?.data?.message || 'Subscription required');
+        navigate('/subscription');
+      } else {
+        toast.error(error.response?.data?.message || 'Failed to delete service');
+      }
       setSubmitting(false);
     }
   };

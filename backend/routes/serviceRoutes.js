@@ -3,6 +3,7 @@ const router = express.Router();
 const { body } = require('express-validator');
 const serviceController = require('../controllers/serviceController');
 const { protect, authorize } = require('../middleware/auth');
+const { requireActiveSubscription } = require('../middleware/subscription');
 const { validate } = require('../middleware/validator');
 const upload = require('../middleware/upload');
 
@@ -24,6 +25,7 @@ router.post(
   '/',
   protect,
   authorize('provider', 'admin'),
+  requireActiveSubscription,
   upload.array('images', 5),
   serviceController.createService
 );
@@ -32,6 +34,7 @@ router.put(
   '/:id',
   protect,
   authorize('provider', 'admin'),
+  requireActiveSubscription,
   upload.array('images', 5),
   serviceController.updateService
 );
@@ -40,6 +43,7 @@ router.delete(
   '/:id',
   protect,
   authorize('provider', 'admin'),
+  requireActiveSubscription,
   serviceController.deleteService
 );
 
