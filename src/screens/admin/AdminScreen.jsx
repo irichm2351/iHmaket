@@ -12,6 +12,8 @@ import {
   TextInput,
   RefreshControl,
   Image,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
@@ -53,11 +55,19 @@ const AdminScreen = () => {
   const [expandedKycIds, setExpandedKycIds] = useState({});
   const [imageViewerVisible, setImageViewerVisible] = useState(false);
   const [selectedImage, setSelectedImage] = useState({ uri: '', title: '' });
-
+  const [subscriptionSettings, setSubscriptionSettings] = useState({
+    enabled: false,
+    amount: 2000,
+    currency: 'NGN',
+    interval: 'monthly'
+  });
+  const [subscriptionLoading, setSubscriptionLoading] = useState(false);
+  const [subscriptionSaving, setSubscriptionSaving] = useState(false);
   const filterOptions = ['all', 'provider', 'customer', 'active', 'inactive', 'restricted'];
 
   useEffect(() => {
     fetchDashboardStats();
+    fetchSubscriptionSettings();
   }, []);
 
   const fetchDashboardStats = async () => {
@@ -70,6 +80,60 @@ const AdminScreen = () => {
       console.error('Error:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchSubscriptionSettings = async () => {
+    try {
+      setSubscriptionLoading(true);
+      const response = await api.get('/admin/subscription-settings');
+      if (response.data.success) {
+        setSubscriptionSettings(response.data.settings);
+      }
+    } catch (error) {
+      if (error.response?.status === 404) {
+        try {
+          const fallback = await api.get('/subscription/settings');
+          if (fallback.data.success) {
+            setSubscriptionSettings(fallback.data.settings);
+            return;
+          }
+        } catch (fallbackError) {
+          // fall through to alert below
+        }
+        Alert.alert(
+          'Update Required',
+          'Subscription settings are not available on this backend. Please deploy the latest backend or update the API URL.'
+        );
+      } else {
+        Alert.alert('Error', 'Failed to fetch subscription settings');
+      }
+    } finally {
+      setSubscriptionLoading(false);
+    }
+  };
+
+  const handleSaveSubscriptionSettings = async () => {
+    try {
+      setSubscriptionSaving(true);
+      const response = await api.put('/admin/subscription-settings', subscriptionSettings);
+      if (response.data.success) {
+        Alert.alert('Success', 'Subscription settings updated');
+        setSubscriptionSettings(response.data.settings);
+      } else {
+        Alert.alert('Error', response.data.message || 'Failed to update settings');
+      }
+    } catch (error) {
+      if (error.response?.status === 404) {
+        Alert.alert(
+          'Update Required',
+          'Subscription settings are not available on this backend. Please deploy the latest backend or update the API URL.'
+        );
+      } else {
+        Alert.alert('Error', 'Failed to update subscription settings');
+      }
+    } finally {
+      setSubscriptionSaving(false);
     }
   };
 
@@ -242,6 +306,7 @@ const AdminScreen = () => {
     setRefreshing(true);
     if (view === 'dashboard') {
       await fetchDashboardStats();
+      await fetchSubscriptionSettings();
     } else if (view === 'users') {
       await fetchUsers(filter, searchQuery);
     } else if (view === 'kyc') {
@@ -373,6 +438,86 @@ const AdminScreen = () => {
               <MaterialCommunityIcons name="message-text" size={20} color="#3b82f6" />
               <Text style={styles.sendMessageButtonText}>Send Message to Users</Text>
             </TouchableOpacity>
+
+            {/* Subscription Control */}
+            <KeyboardAvoidingView
+              behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+              keyboardVerticalOffset={100}
+            >
+              <View style={styles.subscriptionCard}>
+              <View style={styles.subscriptionHeader}>
+                <Text style={styles.subscriptionTitle}>Provider Subscription</Text>
+                <Text style={styles.subscriptionSubtitle}>Enable or disable subscriptions</Text>
+              </View>
+
+              {subscriptionLoading ? (
+                <View style={styles.subscriptionLoading}>
+                  <ActivityIndicator size="small" color="#3b82f6" />
+                </View>
+              ) : (
+                <View>
+                  <View style={styles.subscriptionRow}>
+                    <Text style={styles.subscriptionLabel}>Status</Text>
+                    <TouchableOpacity
+                      style={[
+                        styles.subscriptionToggle,
+                        subscriptionSettings.enabled && styles.subscriptionToggleActive
+                      ]}
+                      onPress={() =>
+                        setSubscriptionSettings({
+                          ...subscriptionSettings,
+                          enabled: !subscriptionSettings.enabled
+                        })
+                      }
+                    >
+                      <Text style={styles.subscriptionToggleText}>
+                        {subscriptionSettings.enabled ? 'Enabled' : 'Disabled'}
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+
+                  <View style={styles.subscriptionRow}>
+                    <Text style={styles.subscriptionLabel}>Monthly Amount (NGN)</Text>
+                    <TextInput
+                      style={styles.subscriptionInput}
+                      keyboardType="numeric"
+                      value={String(subscriptionSettings.amount)}
+                      onChangeText={(value) =>
+                        setSubscriptionSettings({
+                          ...subscriptionSettings,
+                          amount: Number(value || 0)
+                        })
+                      }
+                    />
+                  </View>
+
+                  <View style={styles.subscriptionRow}>
+                    <Text style={styles.subscriptionLabel}>Currency</Text>
+                    <TextInput
+                      style={styles.subscriptionInput}
+                      value={subscriptionSettings.currency}
+                      onChangeText={(value) =>
+                        setSubscriptionSettings({
+                          ...subscriptionSettings,
+                          currency: value.toUpperCase()
+                        })
+                      }
+                    />
+                  </View>
+
+                  <TouchableOpacity
+                    style={styles.subscriptionSaveButton}
+                    onPress={handleSaveSubscriptionSettings}
+                    disabled={subscriptionSaving}
+                  >
+                    <Text style={styles.subscriptionSaveText}>
+                      {subscriptionSaving ? 'Saving...' : 'Save Settings'}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              )}
+              </View>
+            </KeyboardAvoidingView>
           </>
         ) : null}
       </ScrollView>
@@ -1095,6 +1240,82 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     marginLeft: 8,
+  },
+  subscriptionCard: {
+    backgroundColor: '#ffffff',
+    borderRadius: 12,
+    padding: 16,
+    marginHorizontal: 16,
+    marginTop: 10,
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+    shadowColor: '#1f2937',
+    shadowOpacity: 0.06,
+    shadowOffset: { width: 0, height: 4 },
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  subscriptionHeader: {
+    marginBottom: 12,
+  },
+  subscriptionTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#111827',
+  },
+  subscriptionSubtitle: {
+    fontSize: 12,
+    color: '#6b7280',
+    marginTop: 4,
+  },
+  subscriptionLoading: {
+    paddingVertical: 12,
+  },
+  subscriptionRow: {
+    marginBottom: 12,
+  },
+  subscriptionLabel: {
+    fontSize: 12,
+    color: '#6b7280',
+    marginBottom: 6,
+  },
+  subscriptionInput: {
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    fontSize: 14,
+    color: '#111827',
+    backgroundColor: '#f9fafb',
+  },
+  subscriptionToggle: {
+    alignSelf: 'flex-start',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 999,
+    backgroundColor: '#e5e7eb',
+  },
+  subscriptionToggleActive: {
+    backgroundColor: '#dbeafe',
+  },
+  subscriptionToggleText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#1f2937',
+  },
+  subscriptionSaveButton: {
+    backgroundColor: '#3b82f6',
+    paddingVertical: 10,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginTop: 4,
+  },
+  subscriptionSaveText: {
+    color: '#ffffff',
+    fontWeight: '700',
+    fontSize: 13,
   },
   usersHeader: {
     height: 80,
