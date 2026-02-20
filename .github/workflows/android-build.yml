@@ -1,9 +1,16 @@
-name: Build Android Release
+name: Build APK
 
 on:
   push:
-    branches: [ main, master ]
-  workflow_dispatch:
+    branches:
+      - main
+      - master
+      - develop
+  pull_request:
+    branches:
+      - main
+      - master
+      - develop
 
 jobs:
   build:
@@ -18,43 +25,28 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Set up JDK 17
+      - name: Set up Java
         uses: actions/setup-java@v4
         with:
-          java-version: '17'
           distribution: 'temurin'
+          java-version: '17'
 
       - name: Install dependencies
-        working-directory: mobile/iHmaket
-        run: npm ci
-
-      - name: Create .env file
-        working-directory: mobile/iHmaket
         run: |
-          echo "EXPO_PUBLIC_API_URL=${{ secrets.EXPO_PUBLIC_API_URL }}" > .env
-          echo "EXPO_PUBLIC_GOOGLE_CLIENT_ID=${{ secrets.EXPO_PUBLIC_GOOGLE_CLIENT_ID }}" >> .env
+          cd mobile/iHmaket
+          npm install
 
-      - name: Generate native code
-        working-directory: mobile/iHmaket
-        run: npx expo prebuild --platform android --clean
+      - name: Install EAS CLI
+        run: npm install -g eas-cli
 
-      - name: Decode keystore
-        working-directory: mobile/iHmaket/android/app
+      - name: Build APK
         run: |
-          echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 --decode > iHmaket-release.keystore
+          cd mobile/iHmaket
+          eas build --platform android --local
 
-      - name: Build Release AAB
-        working-directory: mobile/iHmaket/android
-        run: ./gradlew bundleRelease
-        env:
-          IHMAKET_RELEASE_STORE_FILE: iHmaket-release.keystore
-          IHMAKET_RELEASE_KEY_ALIAS: iHmaket-key
-          IHMAKET_RELEASE_STORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
-          IHMAKET_RELEASE_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
-
-      - name: Upload AAB
-        uses: actions/upload-artifact@v4
+      - name: Upload APK
+        uses: actions/upload-artifact@v3
         with:
-          name: app-release
-          path: mobile/iHmaket/android/app/build/outputs/bundle/release/app-release.aab
-          retention-days: 30
+          name: android-apk
+          path: mobile/iHmaket/dist/
+          if-no-files-found: warn
