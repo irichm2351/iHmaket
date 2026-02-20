@@ -482,8 +482,39 @@ exports.updateSubscriptionSettings = async (req, res) => {
 
     // Handle subscription enable/disable logic
     if (wasEnabled && !setting.enabled) {
-      // Admin disabled subscriptions - preserve subscription data
-      // Services will be visible regardless of subscription status
+      // Admin disabled subscriptions - preserve subscription data with remaining days
+      const now = new Date();
+      
+      // Get all providers with active subscriptions
+      const providersWithActiveSubscription = await User.find({
+        role: 'provider',
+        isActive: true,
+        subscriptionStatus: 'active',
+        subscriptionExpiresAt: { $gt: now }
+      }).select('_id subscriptionExpiresAt');
+
+      // Calculate and store remaining days for each provider
+      const updateOperations = providersWithActiveSubscription.map((provider) => {
+        const daysRemaining = Math.ceil(
+          (provider.subscriptionExpiresAt - now) / (1000 * 60 * 60 * 24)
+        );
+        return {
+          updateOne: {
+            filter: { _id: provider._id },
+            update: {
+              $set: {
+                subscriptionDaysRemaining: daysRemaining,
+                subscriptionStatus: 'paused' // Mark as paused (not inactive)
+              }
+            }
+          }
+        };
+      });
+
+      if (updateOperations.length > 0) {
+        await User.bulkWrite(updateOperations);
+      }
+
       const adminUser = await User.findById(req.user._id);
       const providers = await User.find({ role: 'provider', isActive: true }).select('_id');
 
@@ -500,58 +531,70 @@ exports.updateSubscriptionSettings = async (req, res) => {
         await Message.insertMany(messages);
       }
     } else if (!wasEnabled && setting.enabled) {
-      // Admin enabled subscriptions - restore valid subscriptions
+      // Admin enabled subscriptions - restore subscriptions with remaining days
       const now = new Date();
       
-      // Find providers with valid (non-expired) subscriptions
-      const providersWithValidSubscription = await User.find({
+      // Find providers with paused subscriptions (disabled while active)
+      const providersWithPausedSubscription = await User.find({
         role: 'provider',
         isActive: true,
-        subscriptionExpiresAt: { $gt: now }
-      }).select('_id');
+        subscriptionStatus: 'paused',
+        subscriptionDaysRemaining: { $gt: 0 }
+      }).select('_id subscriptionDaysRemaining');
 
-      // Restore active status for providers with valid subscriptions
-      if (providersWithValidSubscription.length > 0) {
-        await User.updateMany(
-          {
-            role: 'provider',
-            subscriptionExpiresAt: { $gt: now }
-          },
-          {
-            $set: {
-              subscriptionStatus: 'active'
+      // Restore subscriptions with updated expiration based on remaining days
+      if (providersWithPausedSubscription.length > 0) {
+        const restoreOperations = providersWithPausedSubscription.map((provider) => {
+          const newExpiresAt = new Date(
+            now.getTime() + (provider.subscriptionDaysRemaining * 24 * 60 * 60 * 1000)
+          );
+          
+          return {
+            updateOne: {
+              filter: { _id: provider._id },
+              update: {
+                $set: {
+                  subscriptionStatus: 'active',
+                  subscriptionExpiresAt: newExpiresAt,
+                  subscriptionDaysRemaining: 0
+                }
+              }
             }
-          }
-        );
+          };
+        });
+
+        await User.bulkWrite(restoreOperations);
       }
 
       const adminUser = await User.findById(req.user._id);
       const allProviders = await User.find({ role: 'provider', isActive: true }).select('_id');
 
       if (adminUser && allProviders.length > 0) {
-        // Prepare messages for different groups
-        const validSubMessages = providersWithValidSubscription.map((provider) => ({
+        // Message for providers with restored subscriptions
+        const restoredCount = providersWithPausedSubscription.length;
+        const restorMessages = providersWithPausedSubscription.map((provider) => ({
           conversationId: Message.generateConversationId(adminUser._id, provider._id),
           senderId: adminUser._id,
           receiverId: provider._id,
-          text: `Provider subscriptions have been re-enabled! Your previous subscription has been restored and will continue until its original expiration date. Your services are visible with an active subscription.`
+          text: `Provider subscriptions have been re-enabled! Your previous subscription has been restored with the remaining days from when it was paused. Your subscription will continue until its new expiration date.`
         }));
 
-        const expiredSubMessages = (await User.find({
+        const expiredOrInactiveCount = allProviders.length - restoredCount;
+        const expiredMessages = (await User.find({
           role: 'provider',
           isActive: true,
           $or: [
-            { subscriptionExpiresAt: { $lte: now } },
-            { subscriptionExpiresAt: null }
+            { subscriptionStatus: 'inactive' },
+            { subscriptionDaysRemaining: { $lte: 0 } }
           ]
         }).select('_id')).map((provider) => ({
           conversationId: Message.generateConversationId(adminUser._id, provider._id),
           senderId: adminUser._id,
           receiverId: provider._id,
-          text: `Provider subscriptions have been re-enabled! Your previous subscription has expired. Please go to the Subscription page to renew your monthly plan and keep your services visible.`
+          text: `Provider subscriptions have been re-enabled! Please go to the Subscription page to activate or renew your monthly plan and keep your services visible.`
         }));
 
-        const allMessages = [...validSubMessages, ...expiredSubMessages];
+        const allMessages = [...restorMessages, ...expiredMessages];
         if (allMessages.length > 0) {
           await Message.insertMany(allMessages);
         }

@@ -94,6 +94,10 @@ const userSchema = new mongoose.Schema({
   subscriptionUpdatedAt: {
     type: Date
   },
+  subscriptionDaysRemaining: {
+    type: Number,
+    default: 0
+  },
   isActive: {
     type: Boolean,
     default: true
