@@ -482,22 +482,13 @@ exports.updateSubscriptionSettings = async (req, res) => {
 
     // Handle subscription enable/disable logic
     if (wasEnabled && !setting.enabled) {
-      // Admin disabled subscriptions - remove subscription from all providers
-      await User.updateMany(
-        { role: 'provider' },
-        {
-          $set: {
-            subscriptionStatus: 'inactive',
-            subscriptionExpiresAt: null
-          }
-        }
-      );
-
+      // Admin disabled subscriptions - preserve subscription data
+      // Services will be visible regardless of subscription status
       const adminUser = await User.findById(req.user._id);
       const providers = await User.find({ role: 'provider', isActive: true }).select('_id');
 
       if (adminUser && providers.length > 0) {
-        const messageText = `Important update: Provider subscriptions have been disabled. Your services are now visible to all customers. You no longer need an active subscription to display your services.`;
+        const messageText = `Important update: Provider subscriptions have been temporarily disabled. Your services are now visible to all customers without requiring an active subscription. Your subscription data has been preserved. When subscriptions are re-enabled, your subscription will resume from where it stopped.`;
 
         const messages = providers.map((provider) => ({
           conversationId: Message.generateConversationId(adminUser._id, provider._id),
@@ -509,21 +500,61 @@ exports.updateSubscriptionSettings = async (req, res) => {
         await Message.insertMany(messages);
       }
     } else if (!wasEnabled && setting.enabled) {
-      // Admin enabled subscriptions - notify all providers
+      // Admin enabled subscriptions - restore valid subscriptions
+      const now = new Date();
+      
+      // Find providers with valid (non-expired) subscriptions
+      const providersWithValidSubscription = await User.find({
+        role: 'provider',
+        isActive: true,
+        subscriptionExpiresAt: { $gt: now }
+      }).select('_id');
+
+      // Restore active status for providers with valid subscriptions
+      if (providersWithValidSubscription.length > 0) {
+        await User.updateMany(
+          {
+            role: 'provider',
+            subscriptionExpiresAt: { $gt: now }
+          },
+          {
+            $set: {
+              subscriptionStatus: 'active'
+            }
+          }
+        );
+      }
+
       const adminUser = await User.findById(req.user._id);
-      const providers = await User.find({ role: 'provider', isActive: true }).select('_id');
+      const allProviders = await User.find({ role: 'provider', isActive: true }).select('_id');
 
-      if (adminUser && providers.length > 0) {
-        const messageText = `Important update: Provider subscriptions are now required. Your service ads will be hidden from customers until you subscribe. Please go to the Subscription page to activate your monthly plan.`;
-
-        const messages = providers.map((provider) => ({
+      if (adminUser && allProviders.length > 0) {
+        // Prepare messages for different groups
+        const validSubMessages = providersWithValidSubscription.map((provider) => ({
           conversationId: Message.generateConversationId(adminUser._id, provider._id),
           senderId: adminUser._id,
           receiverId: provider._id,
-          text: messageText
+          text: `Provider subscriptions have been re-enabled! Your previous subscription has been restored and will continue until its original expiration date. Your services are visible with an active subscription.`
         }));
 
-        await Message.insertMany(messages);
+        const expiredSubMessages = (await User.find({
+          role: 'provider',
+          isActive: true,
+          $or: [
+            { subscriptionExpiresAt: { $lte: now } },
+            { subscriptionExpiresAt: null }
+          ]
+        }).select('_id')).map((provider) => ({
+          conversationId: Message.generateConversationId(adminUser._id, provider._id),
+          senderId: adminUser._id,
+          receiverId: provider._id,
+          text: `Provider subscriptions have been re-enabled! Your previous subscription has expired. Please go to the Subscription page to renew your monthly plan and keep your services visible.`
+        }));
+
+        const allMessages = [...validSubMessages, ...expiredSubMessages];
+        if (allMessages.length > 0) {
+          await Message.insertMany(allMessages);
+        }
       }
     }
 
