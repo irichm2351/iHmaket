@@ -82,11 +82,15 @@ exports.createSupportMessage = async (req, res) => {
       const admins = await User.find({ role: 'admin', isActive: true }).select('_id name profilePic');
       console.log(`👥 Found ${admins.length} active admin(s):`, admins.map(a => a.name).join(', '));
       console.log(`🌐 Total online users: ${onlineUsers.size}`);
+      console.log(`📋 Online users map:`, Array.from(onlineUsers.keys()));
 
       let notifiedCount = 0;
       admins.forEach((admin) => {
         const adminSocketId = onlineUsers.get(admin._id.toString());
+        console.log(`🔍 Checking admin ${admin.name} (${admin._id.toString()}): socketId=${adminSocketId}`);
+        
         if (adminSocketId) {
+          console.log(`✉️  Broadcasting to admin ${admin.name} on socket ${adminSocketId}`);
           // First send support_request notification so admin sees the alert
           io.to(adminSocketId).emit('support_request', {
             ticketId: ticket._id,
@@ -360,14 +364,18 @@ exports.acceptSupportRequest = async (req, res) => {
     const { text } = req.body; // Optional reply message
 
     if (req.user.role !== 'admin') {
+      console.log(`❌ Non-admin user attempted to accept support request: ${req.user.name}`);
       return res.status(403).json({
         success: false,
         message: 'Only admins can accept support requests'
       });
     }
 
+    console.log(`🔍 Admin ${req.user.name} attempting to accept ticket: ${ticketId}`);
+
     const ticket = await SupportTicket.findById(ticketId);
     if (!ticket) {
+      console.log(`❌ Ticket not found: ${ticketId}`);
       return res.status(404).json({
         success: false,
         message: 'Support ticket not found'
@@ -379,7 +387,7 @@ exports.acceptSupportRequest = async (req, res) => {
     ticket.assignedAdminId = req.user._id;
     await ticket.save();
 
-    console.log(`✅ Admin ${req.user.name} accepted support request for user ${ticket.userId}`);
+    console.log(`✅ Admin ${req.user.name} assigned to ticket ${ticketId}`);
 
     // If there's a reply message, create it
     let message = null;
@@ -392,6 +400,7 @@ exports.acceptSupportRequest = async (req, res) => {
         text: text.trim()
       });
       await message.populate('senderId', 'name profilePic');
+      console.log(`📝 Greeting message created: ${message._id}`);
     }
 
     const io = req.app.get('io');
@@ -399,7 +408,10 @@ exports.acceptSupportRequest = async (req, res) => {
 
     // Notify the user that admin accepted
     const userSocketId = onlineUsers.get(ticket.userId.toString());
+    console.log(`🔍 Looking for user socket: userId=${ticket.userId.toString()}, socketId=${userSocketId}`);
+    
     if (userSocketId) {
+      console.log(`📤 Emitting support_assigned to user on socket ${userSocketId}`);
       io.to(userSocketId).emit('support_assigned', {
         ticketId: ticket._id,
         admin: {
@@ -411,6 +423,7 @@ exports.acceptSupportRequest = async (req, res) => {
 
       // If there's a message, also send that
       if (message) {
+        console.log(`📤 Emitting greeting message to user`);
         io.to(userSocketId).emit('support_message', {
           _id: message._id,
           ticketId: message.ticketId,
@@ -422,6 +435,8 @@ exports.acceptSupportRequest = async (req, res) => {
           createdAt: message.createdAt
         });
       }
+    } else {
+      console.log(`⚠️  User ${ticket.userId} not online`);
     }
 
     const populatedTicket = await SupportTicket.findById(ticket._id)
@@ -434,6 +449,7 @@ exports.acceptSupportRequest = async (req, res) => {
       message
     });
   } catch (error) {
+    console.error(`❌ Error accepting support request:`, error);
     res.status(500).json({
       success: false,
       message: 'Error accepting support request',

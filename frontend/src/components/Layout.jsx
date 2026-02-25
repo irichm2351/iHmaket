@@ -191,14 +191,7 @@ const Layout = () => {
     };
 
     loadSupportCount();
-
-    const handleSupportRequest = () => {
-      incrementSupportCount();
-    };
-
-    socket.on('support_request', handleSupportRequest);
-    return () => socket.off('support_request', handleSupportRequest);
-  }, [isAuthenticated, user?.role, setSupportCount, incrementSupportCount]);
+  }, [isAuthenticated, user?.role, setSupportCount]);
 
   return (
     <div className="min-h-screen flex flex-col">

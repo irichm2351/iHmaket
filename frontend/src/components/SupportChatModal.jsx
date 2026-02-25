@@ -71,16 +71,25 @@ const SupportChatModal = ({ onClose, userId, userRole, userName, userProfilePic,
     if (ticketId) {
       const loadMessages = async () => {
         try {
+          debugSupport.info('Loading support messages', { ticketId });
           const response = await supportAPI.getSupportMessages(ticketId);
           if (response.data?.messages) {
             debugSupport.info('Loaded support messages', {
               ticketId,
-              count: response.data.messages.length
+              count: response.data.messages.length,
+              messages: response.data.messages.map(m => ({ 
+                _id: m._id,
+                senderRole: m.senderRole,
+                text: m.text.substring(0, 30)
+              }))
             });
             setMessages(response.data.messages);
           }
         } catch (error) {
-          debugSupport.error('Failed to load messages', { ticketId });
+          debugSupport.error('Failed to load messages', { 
+            ticketId,
+            errorMessage: error.message 
+          });
         }
       };
 
@@ -93,9 +102,19 @@ const SupportChatModal = ({ onClose, userId, userRole, userName, userProfilePic,
     const handleSupportMessage = (data) => {
       // Only add if it's for this ticket
       if (data.ticketId === ticketId) {
+        debugSupport.socket('Received support message', {
+          ticketId: data.ticketId,
+          senderRole: data.senderRole,
+          text: data.text.substring(0, 30)
+        });
+        
         setMessages((prev) => {
           const exists = prev.some((m) => m._id === data._id);
-          return exists ? prev : [...prev, {
+          if (exists) {
+            debugSupport.info('Message already exists, skipping duplicate');
+            return prev;
+          }
+          return [...prev, {
             _id: data._id,
             text: data.text,
             senderId: data.senderId,
@@ -114,6 +133,21 @@ const SupportChatModal = ({ onClose, userId, userRole, userName, userProfilePic,
         setTicketStatus('assigned');
         setSystemMessage(`${data.admin.name} is helping you!`);
         debugSupport.success('Admin assigned', { adminName: data.admin.name });
+        
+        // Reload messages after admin accepts
+        const reloadMessages = async () => {
+          try {
+            const response = await supportAPI.getSupportMessages(ticketId);
+            if (response.data?.messages) {
+              debugSupport.info('Reloaded messages after admin assigned');
+              setMessages(response.data.messages);
+            }
+          } catch (error) {
+            debugSupport.error('Failed to reload messages', { ticketId });
+          }
+        };
+        
+        reloadMessages();
       }
     };
 
@@ -248,7 +282,9 @@ const SupportChatModal = ({ onClose, userId, userRole, userName, userProfilePic,
         <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-gray-50">
           {messages.length > 0 ? (
             messages.map((message) => {
-              const isMine = message.senderId === userId;
+              // Handle both string IDs and object IDs
+              const senderId = typeof message.senderId === 'string' ? message.senderId : message.senderId?._id;
+              const isMine = senderId === userId;
               return (
                 <div key={message._id} className={`flex ${isMine ? 'justify-end' : 'justify-start'}`}>
                   <div
