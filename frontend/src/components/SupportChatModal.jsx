@@ -6,6 +6,14 @@ import toast from 'react-hot-toast';
 import { debugSupport } from '../utils/debugSupport';
 
 const SupportChatModal = ({ onClose, userId, userRole, userName, userProfilePic, supportAlert }) => {
+  console.log('\n========== SUPPORT CHAT MODAL OPENED ==========');
+  console.log('User Role:', userRole);
+  console.log('User ID:', userId);
+  console.log('Support Alert:', supportAlert);
+  console.log('Has ticket ID?:', !!supportAlert?.ticketId);
+  console.log('Has user info?:', !!supportAlert?.user);
+  console.log('==============================================\n');
+  
   const [messages, setMessages] = useState([]);
   const [messageText, setMessageText] = useState('');
   const [sending, setSending] = useState(false);
@@ -29,7 +37,14 @@ const SupportChatModal = ({ onClose, userId, userRole, userName, userProfilePic,
 
   // For admin: Set supporting user info from alert
   useEffect(() => {
+    console.log('useEffect triggered - supportAlert changed:', supportAlert);
+    console.log('userRole:', userRole);
+    
     if (userRole === 'admin' && supportAlert) {
+      console.log('Setting admin support info:');
+      console.log('  - Supporting User:', supportAlert.user?.name);
+      console.log('  - Ticket ID:', supportAlert.ticketId);
+      
       setSupportingUser(supportAlert.user);
       setTicketId(supportAlert.ticketId);
       setTicketStatus('open');
@@ -340,7 +355,7 @@ const SupportChatModal = ({ onClose, userId, userRole, userName, userProfilePic,
           {userRole === 'admin' && ticketStatus === 'open' && (
             <div className="px-4 py-3 border-b bg-yellow-50 flex flex-col gap-2">
               <p className="text-xs text-orange-700 font-semibold">
-                ⚠️ {supportingUser?.name} is waiting for your response
+                ⚠️ {supportingUser?.name || 'User'} is waiting for your response
               </p>
               <button
                 onClick={handleAcceptRequest}
@@ -348,6 +363,13 @@ const SupportChatModal = ({ onClose, userId, userRole, userName, userProfilePic,
               >
                 ✅ Accept Support Request
               </button>
+            </div>
+          )}
+          
+          {/* Debug info for admin */}
+          {userRole === 'admin' && (
+            <div className="px-4 py-1 bg-gray-100 text-xs text-gray-600">
+              Debug: Status={ticketStatus}, TicketID={ticketId ? 'Yes' : 'No'}, User={supportingUser?.name || 'None'}
             </div>
           )}
 

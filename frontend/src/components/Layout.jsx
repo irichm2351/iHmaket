@@ -38,33 +38,59 @@ const Layout = () => {
 
   // When admin opens support modal, fetch open tickets if no alerts
   const handleOpenSupportModal = async () => {
-    setShowChatModal(true);
+    console.log('\n========== ADMIN OPENING SUPPORT MODAL ==========');
+    console.log('Admin role:', user?.role);
+    console.log('Support alerts count:', supportAlerts.length);
     
-    if (user?.role === 'admin' && supportAlerts.length === 0) {
-      try {
-        const response = await supportAPI.getOpenTickets();
-        const tickets = response.data.tickets || [];
-        
-        if (tickets.length > 0) {
-          // Convert first ticket to alert format
-          const firstTicket = tickets[0];
-          setCurrentSupportTicket({
-            ticketId: firstTicket._id,
-            user: {
-              _id: firstTicket.userId._id,
-              name: firstTicket.userId.name,
-              profilePic: firstTicket.userId.profilePic
-            },
-            lastMessage: firstTicket.lastMessage,
-            createdAt: firstTicket.createdAt
-          });
+    if (user?.role === 'admin') {
+      // First check if we have live alerts
+      if (supportAlerts.length > 0) {
+        console.log('Using live alert:', supportAlerts[supportAlerts.length - 1]);
+        setCurrentSupportTicket(supportAlerts[supportAlerts.length - 1]);
+        setShowChatModal(true);
+      } else {
+        // No live alerts, fetch from database first
+        console.log('No live alerts, fetching open tickets from database...');
+        try {
+          const response = await supportAPI.getOpenTickets();
+          const tickets = response.data.tickets || [];
+          console.log('Open tickets found:', tickets.length);
+          
+          if (tickets.length > 0) {
+            // Convert first ticket to alert format
+            const firstTicket = tickets[0];
+            console.log('Loading first ticket:', firstTicket._id, 'from user:', firstTicket.userId.name);
+            
+            const ticketAlert = {
+              ticketId: firstTicket._id,
+              user: {
+                _id: firstTicket.userId._id,
+                name: firstTicket.userId.name,
+                profilePic: firstTicket.userId.profilePic
+              },
+              lastMessage: firstTicket.lastMessage,
+              createdAt: firstTicket.createdAt
+            };
+            
+            setCurrentSupportTicket(ticketAlert);
+            console.log('Current support ticket set:', ticketAlert);
+            // Wait a tiny bit for state to update, then open modal
+            setTimeout(() => setShowChatModal(true), 100);
+          } else {
+            console.log('No open tickets available');
+            // Still open modal but with no ticket
+            setShowChatModal(true);
+          }
+        } catch (error) {
+          console.error('Failed to fetch open tickets:', error);
+          setShowChatModal(true);
         }
-      } catch (error) {
-        console.error('Failed to fetch open tickets:', error);
       }
-    } else if (supportAlerts.length > 0) {
-      setCurrentSupportTicket(supportAlerts[supportAlerts.length - 1]);
+    } else {
+      // Regular user - just open modal
+      setShowChatModal(true);
     }
+    console.log('================================================\n');
   };
 
   useEffect(() => {
