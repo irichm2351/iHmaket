@@ -105,23 +105,23 @@ const Layout = () => {
   useEffect(() => {
     if (!isAuthenticated || user?.role !== 'admin') return;
 
-    console.log('[Layout] Admin detected, setting up support request listener');
+    console.log('[Layout] 👨‍💼 Admin detected, setting up support request listener');
 
     const loadSupportCount = async () => {
       try {
         const response = await supportAPI.getOpenTickets();
         const tickets = response.data.tickets || [];
-        console.log('[Layout] Loaded support count:', tickets.length);
+        console.log('[Layout] 📊 Loaded support count:', tickets.length);
         setSupportCount(tickets.length);
-      } catch {
-        // Ignore support count failures
+      } catch (error) {
+        console.error('[Layout] ❌ Failed to load support count:', error);
       }
     };
 
     loadSupportCount();
 
     const handleSupportRequest = (data) => {
-      console.log('[Layout] Received support_request event:', data);
+      console.log('[Layout] 🔔 Received support_request event:', data);
       incrementSupportCount();
       
       // Show toast notification
@@ -153,8 +153,19 @@ const Layout = () => {
       }
     };
 
+    // Make sure socket is connected before listening
+    if (!socket.connected) {
+      console.log('[Layout] ⏳ Socket not connected yet, connecting...');
+      socket.connect();
+    }
+
+    console.log('[Layout] 👂 Adding support_request listener');
     socket.on('support_request', handleSupportRequest);
-    return () => socket.off('support_request', handleSupportRequest);
+    
+    return () => {
+      console.log('[Layout] 🗑️ Removing support_request listener');
+      socket.off('support_request', handleSupportRequest);
+    };
   }, [isAuthenticated, user?.role, setSupportCount, incrementSupportCount]);
 
   return (

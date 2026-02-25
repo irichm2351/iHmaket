@@ -172,18 +172,23 @@ const Messages = () => {
   useEffect(() => {
     if (!isAuthenticated || user?.role !== 'admin') return;
 
+    console.log('[Messages] 👨‍💼 Admin detected, adding support request listener');
+
     const handleSupportRequest = (data) => {
-      console.log('[Messages] Received support_request event:', data);
-      if (!data?.ticketId) return;
+      console.log('[Messages] 🔔 Received support_request event:', data);
+      if (!data?.ticketId) {
+        console.log('[Messages] ❌ No ticketId in event data');
+        return;
+      }
 
       setSupportRequests((prev) => {
         const exists = prev.some((ticket) => ticket._id?.toString() === data.ticketId.toString());
         if (exists) {
-          console.log('[Messages] Ticket already exists in list');
+          console.log('[Messages] ℹ️ Ticket already exists in list');
           return prev;
         }
 
-        console.log('[Messages] Adding new ticket to list');
+        console.log('[Messages] ✅ Adding new ticket to list');
         return [
           {
             _id: data.ticketId,
@@ -199,8 +204,12 @@ const Messages = () => {
       toast.success('New support request');
     };
 
+    console.log('[Messages] 👂 Adding support_request listener');
     socket.on('support_request', handleSupportRequest);
-    return () => socket.off('support_request', handleSupportRequest);
+    return () => {
+      console.log('[Messages] 🗑️ Removing support_request listener');
+      socket.off('support_request', handleSupportRequest);
+    };
   }, [isAuthenticated, user?.role]);
 
   useEffect(() => {

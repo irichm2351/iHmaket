@@ -49,12 +49,20 @@ exports.createSupportTicket = async (req, res) => {
     console.log(`[Support Ticket] Online users map size:`, onlineUsers.size);
     console.log(`[Support Ticket] Online user IDs:`, Array.from(onlineUsers.keys()).join(', '));
 
+    console.log(`\n[Support Ticket] 📝 Creating new support ticket`);
+    console.log(`[Support Ticket] User: ${req.user.name} (${req.user._id})`);
+
     let notifiedCount = 0;
     admins.forEach((admin) => {
       const adminSocketId = onlineUsers.get(admin._id.toString());
-      console.log(`[Support Ticket] Checking admin ${admin.name} (${admin._id.toString()}): online=${!!adminSocketId}`);
+      console.log(`[Support Ticket] Checking admin ${admin.name}:`, {
+        adminId: admin._id.toString(),
+        online: !!adminSocketId,
+        socketId: adminSocketId || 'NOT_ONLINE'
+      });
       
       if (adminSocketId) {
+        console.log(`[Support Ticket] ✅ Emitting to admin ${admin.name}`);
         io.to(adminSocketId).emit('support_request', {
           ticketId: ticket._id,
           user: {
@@ -66,12 +74,13 @@ exports.createSupportTicket = async (req, res) => {
           createdAt: ticket.createdAt,
           status: ticket.status
         });
-        console.log(`[Support Ticket] ✅ Emitted support_request to admin ${admin.name}`);
         notifiedCount++;
+      } else {
+        console.log(`[Support Ticket] ❌ Admin ${admin.name} NOT ONLINE`);
       }
     });
 
-    console.log(`[Support Ticket] Total admins notified: ${notifiedCount}/${admins.length}`);
+    console.log(`[Support Ticket] 📊 Notified ${notifiedCount}/${admins.length} admins\n`);
 
     return res.status(201).json({
       success: true,
