@@ -85,17 +85,7 @@ const SupportChatModal = ({ admin, onClose, userId }) => {
       <div className="relative bg-white rounded-lg shadow-2xl w-full md:w-96 h-96 md:h-[600px] flex flex-col z-50">
         {/* Header */}
         <div className="bg-gradient-to-r from-primary-600 to-primary-700 text-white p-4 rounded-t-lg flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <img
-              src={admin.profilePic || 'https://via.placeholder.com/40'}
-              alt={admin.name}
-              className="w-10 h-10 rounded-full object-cover"
-            />
-            <div>
-              <p className="font-semibold">{admin.name}</p>
-              <p className="text-xs text-primary-100">Support Team</p>
-            </div>
-          </div>
+          <p className="font-semibold">Support Team</p>
           <button
             onClick={onClose}
             className="p-1 hover:bg-primary-600 rounded-full transition"
