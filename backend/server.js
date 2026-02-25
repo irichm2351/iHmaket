@@ -22,7 +22,6 @@ const messageRoutes = require('./routes/messageRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 const reportRoutes = require('./routes/reportRoutes');
 const subscriptionRoutes = require('./routes/subscriptionRoutes');
-const supportRoutes = require('./routes/supportRoutes');
 
 // Initialize Express app
 const app = express();
@@ -119,7 +118,6 @@ app.use('/api/messages', messageRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/reports', reportRoutes);
 app.use('/api/subscription', subscriptionRoutes);
-app.use('/api/support', supportRoutes);
 
 // Health check route
 app.get('/api/health', (req, res) => {
