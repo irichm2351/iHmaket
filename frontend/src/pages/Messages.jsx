@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { format, formatDistanceToNow } from 'date-fns';
-import { FiSearch, FiSend, FiUser, FiHelpCircle } from 'react-icons/fi';
+import { FiSearch, FiSend, FiUser } from 'react-icons/fi';
 import { messageAPI, userAPI } from '../utils/api';
 import useAuthStore from '../store/authStore';
 import useMessageStore from '../store/messageStore';
@@ -287,41 +287,6 @@ const Messages = () => {
     });
   };
 
-  const handleContactSupport = async () => {
-    try {
-      // Check if already have a conversation with an admin
-      const adminConversation = conversations.find(c => c.user?.role === 'admin');
-      
-      if (adminConversation) {
-        setSelectedConversation(adminConversation);
-        toast.success('Opening support chat');
-        return;
-      }
-
-      // Fetch admin user
-      const response = await userAPI.getSupportAdmin();
-      const admin = response.data.admin;
-
-      if (!admin) {
-        toast.error('No support admin available at the moment');
-        return;
-      }
-
-      // Create new conversation with admin
-      const newConversation = {
-        user: admin,
-        lastMessage: null,
-        unreadCount: 0
-      };
-
-      setConversations((prev) => [newConversation, ...prev]);
-      setSelectedConversation(newConversation);
-      toast.success('Support chat opened. Send a message to get help!');
-    } catch (error) {
-      toast.error(error.response?.data?.message || 'Failed to contact support');
-    }
-  };
-
   const filteredConversations = useMemo(() => {
     if (!search.trim()) return conversations;
     return conversations.filter((c) =>
@@ -359,17 +324,6 @@ const Messages = () => {
               className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-600"
             />
           </div>
-
-          {/* Contact Support Button */}
-          {user?.role !== 'admin' && (
-            <button
-              onClick={handleContactSupport}
-              className="w-full mb-4 px-4 py-3 bg-gradient-to-r from-primary-600 to-primary-700 text-white rounded-lg hover:from-primary-700 hover:to-primary-800 transition-all flex items-center justify-center gap-2 font-medium shadow-md"
-            >
-              <FiHelpCircle size={20} />
-              Contact Support / Help
-            </button>
-          )}
 
           {loadingConversations ? (
             <div className="flex-1 flex items-center justify-center">
