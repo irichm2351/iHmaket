@@ -82,7 +82,7 @@ const SupportChatModal = ({ admin, onClose, userId }) => {
       <div className="absolute inset-0 bg-black bg-opacity-20" onClick={onClose}></div>
 
       {/* Chat Modal */}
-      <div className="relative bg-white rounded-lg shadow-2xl w-full md:w-96 h-96 md:h-[600px] flex flex-col z-50">
+      <div className="relative bg-white rounded-lg shadow-2xl w-full md:w-80 h-80 md:h-96 flex flex-col z-50">
         {/* Header */}
         <div className="bg-gradient-to-r from-primary-600 to-primary-700 text-white p-4 rounded-t-lg flex items-center justify-between">
           <p className="font-semibold">Support Team</p>
