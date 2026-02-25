@@ -98,6 +98,11 @@ const Layout = () => {
           socketId: socket.id,
           userId: user._id
         });
+        
+        // For admins, verify user_connected was emitted
+        if (user?.role === 'admin') {
+          console.log('✅ Admin socket connected and ready to receive support requests');
+        }
       } else {
         debugSupport.error('Socket not connected after timeout', {
           userId: user._id

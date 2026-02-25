@@ -3,6 +3,9 @@ const router = express.Router();
 const supportController = require('../controllers/supportController');
 const { protect } = require('../middleware/auth');
 
+// DEBUG: Check online admins status
+router.get('/debug/online-admins', protect, supportController.getDebugOnlineAdmins);
+
 // User creates support message (starts ticket)
 router.post('/messages', protect, supportController.createSupportMessage);
 

@@ -2,6 +2,46 @@ const SupportTicket = require('../models/SupportTicket');
 const SupportMessage = require('../models/SupportMessage');
 const User = require('../models/User');
 
+// @desc    DEBUG: Get current online admins (for troubleshooting)
+// @route   GET /api/support/debug/online-admins
+// @access  Private (Admin)
+exports.getDebugOnlineAdmins = async (req, res) => {
+  try {
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({ success: false, message: 'Admin only' });
+    }
+
+    const io = req.app.get('io');
+    const onlineUsers = req.app.get('onlineUsers');
+    const admins = await User.find({ role: 'admin' }).select('_id name role isActive');
+
+    const adminStatus = admins.map(admin => {
+      const socketId = onlineUsers.get(admin._id.toString());
+      return {
+        _id: admin._id,
+        name: admin.name,
+        isActive: admin.isActive,
+        online: !!socketId,
+        socketId: socketId || 'N/A'
+      };
+    });
+
+    res.json({
+      success: true,
+      totalAdmins: admins.length,
+      onlineCount: adminStatus.filter(a => a.online).length,
+      onlineUsersMapSize: onlineUsers.size,
+      admins: adminStatus
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching admin status',
+      error: error.message
+    });
+  }
+};
+
 // @desc    Create support ticket message from user
 // @route   POST /api/support/messages
 // @access  Private
@@ -79,18 +119,20 @@ exports.createSupportMessage = async (req, res) => {
       }
     } else {
       // If not assigned, notify all online admins about the new message
-      const admins = await User.find({ role: 'admin', isActive: true }).select('_id name profilePic');
-      console.log(`👥 Found ${admins.length} active admin(s):`, admins.map(a => a.name).join(', '));
+      // Get all admins (don't filter by isActive - they should get requests when online)
+      const admins = await User.find({ role: 'admin' }).select('_id name profilePic');
+      console.log(`👥 Found ${admins.length} admin(s) in system:`, admins.map(a => a.name).join(', '));
       console.log(`🌐 Total online users: ${onlineUsers.size}`);
       console.log(`📋 Online users map:`, Array.from(onlineUsers.keys()));
 
       let notifiedCount = 0;
       admins.forEach((admin) => {
-        const adminSocketId = onlineUsers.get(admin._id.toString());
-        console.log(`🔍 Checking admin ${admin.name} (${admin._id.toString()}): socketId=${adminSocketId}`);
+        const adminIdString = admin._id.toString();
+        const adminSocketId = onlineUsers.get(adminIdString);
+        console.log(`🔍 Checking admin ${admin.name} (${adminIdString}): socketId=${adminSocketId || 'NOT ONLINE'}`);
         
         if (adminSocketId) {
-          console.log(`✉️  Broadcasting to admin ${admin.name} on socket ${adminSocketId}`);
+          console.log(`✉️  Broadcasting support_request to admin ${admin.name} on socket ${adminSocketId}`);
           // First send support_request notification so admin sees the alert
           io.to(adminSocketId).emit('support_request', {
             ticketId: ticket._id,
@@ -103,9 +145,11 @@ exports.createSupportMessage = async (req, res) => {
             createdAt: ticket.createdAt
           });
           notifiedCount++;
+        } else {
+          console.log(`⏱️  Admin ${admin.name} is offline - won't receive real-time notification`);
         }
       });
-      console.log(`✅ Notified ${notifiedCount} online admin(s) about support request from ${req.user.name}`);
+      console.log(`✅ Notified ${notifiedCount}/${admins.length} admin(s) about support request from ${req.user.name}`);
     }
 
     return res.status(201).json({

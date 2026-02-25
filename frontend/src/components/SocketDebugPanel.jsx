@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import socket from '../utils/socket';
 import { debugSupport } from '../utils/debugSupport';
+import { supportAPI } from '../utils/api';
 import useAuthStore from '../store/authStore';
 import toast from 'react-hot-toast';
 
@@ -82,6 +83,26 @@ const SocketDebugPanel = () => {
   const exportLogs = () => {
     debugSupport.exportLogs();
     toast.success('Logs exported');
+  };
+
+  const checkAdminStatus = async () => {
+    try {
+      debugSupport.info('Checking admin online status');
+      const response = await supportAPI.debugGetOnlineAdmins();
+      const data = response.data;
+      
+      if (data.success) {
+        console.log('📊 Admin Status:', data);
+        const adminList = data.admins
+          .map(a => `${a.name} (${a.online ? '🟢 ONLINE' : '🔴 OFFLINE'})`)
+          .join(', ');
+        toast.success(`${data.onlineCount}/${data.totalAdmins} admins online: ${adminList}`);
+      }
+    } catch (error) {
+      debugSupport.error('Failed to check admin status', { error: error.message });
+      toast.error('Failed to check admin status');
+      console.error(error);
+    }
   };
 
   if (!isOpen) {
@@ -187,6 +208,14 @@ const SocketDebugPanel = () => {
             >
               Reconnect
             </button>
+            {user?.role === 'admin' && (
+              <button
+                onClick={checkAdminStatus}
+                className="px-3 py-2 bg-indigo-500 text-white text-xs rounded hover:bg-indigo-600 transition"
+              >
+                Admin Status
+              </button>
+            )}
             {user?.role === 'admin' && (
               <button
                 onClick={testSupportRequest}

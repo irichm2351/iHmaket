@@ -92,6 +92,7 @@ export const userAPI = {
 
 // Support API
 export const supportAPI = {
+  debugGetOnlineAdmins: () => api.get('/support/debug/online-admins'),
   createSupportMessage: (data) => api.post('/support/messages', data),
   getSupportMessages: (ticketId) => api.get(`/support/messages/${ticketId}`),
   sendSupportMessage: (ticketId, data) => api.post(`/support/tickets/${ticketId}/message`, data),
