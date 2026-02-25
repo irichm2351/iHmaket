@@ -134,8 +134,8 @@ const Layout = () => {
         }
         
         // Show toast
-        toast.success(`${data?.user?.name} needs help!`, {
-          duration: 5000,
+        toast.success(`📞 Support Request: ${data?.user?.name} needs help! Click the chat button to respond.`, {
+          duration: 8000,
           icon: '🔔',
         });
 
@@ -146,10 +146,11 @@ const Layout = () => {
 
         // Browser notification
         if ('Notification' in window && Notification.permission === 'granted') {
-          new Notification('Support Request', {
-            body: `${data?.user?.name} is requesting support`,
+          new Notification('🔔 Support Request', {
+            body: `${data?.user?.name} is requesting support. Click to view.`,
             icon: data?.user?.profilePic || '/favicon.ico',
-            tag: 'support-request'
+            tag: 'support-request',
+            requireInteraction: true
           });
         }
       };

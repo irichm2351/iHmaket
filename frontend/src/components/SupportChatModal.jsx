@@ -20,7 +20,7 @@ const SupportChatModal = ({ onClose, userId, userRole, userName, userProfilePic,
   useEffect(() => {
     if (userRole === 'admin') {
       if (supportAlert?.user) {
-        setSystemMessage(`Supporting: ${supportAlert.user.name}`);
+        setSystemMessage(`📞 New support request from ${supportAlert.user.name}. Click "Accept" to start helping.`);
       }
     } else {
       setSystemMessage('Connecting to support team...');
@@ -49,9 +49,15 @@ const SupportChatModal = ({ onClose, userId, userRole, userName, userProfilePic,
           if (response.data?.ticket?._id) {
             setTicketId(response.data.ticket._id);
             setTicketStatus(response.data.ticket.status);
-            setSystemMessage('Support request sent! Waiting for admin...');
+            setSystemMessage('⏳ Your support request has been sent! Waiting for admin to accept...');
             debugSupport.success('Support ticket created', {
               ticketId: response.data.ticket._id
+            });
+            
+            // Show confirmation toast
+            toast.success('Support request sent! An admin will be with you shortly.', {
+              duration: 4000,
+              icon: '✉️'
             });
           }
         } catch (error) {
@@ -131,8 +137,16 @@ const SupportChatModal = ({ onClose, userId, userRole, userName, userProfilePic,
       if (data.ticketId === ticketId) {
         setAssignedAdmin(data.admin);
         setTicketStatus('assigned');
-        setSystemMessage(`${data.admin.name} is helping you!`);
+        setSystemMessage(`✅ ${data.admin.name} has accepted your request and is ready to help!`);
         debugSupport.success('Admin assigned', { adminName: data.admin.name });
+        
+        // Show toast notification to user
+        if (userRole !== 'admin') {
+          toast.success(`${data.admin.name} has accepted your request! You can now chat.`, {
+            duration: 5000,
+            icon: '✅'
+          });
+        }
         
         // Reload messages after admin accepts
         const reloadMessages = async () => {
@@ -217,7 +231,7 @@ const SupportChatModal = ({ onClose, userId, userRole, userName, userProfilePic,
       });
 
       setTicketStatus(response.data.ticket.status);
-      setSystemMessage('You accepted the request');
+      setSystemMessage(`✅ Request accepted! You're now chatting with ${supportingUser?.name || 'user'}.`);
       debugSupport.success('Request accepted', { ticketId });
       toast.success('Support request accepted!');
     } catch (error) {
@@ -317,12 +331,15 @@ const SupportChatModal = ({ onClose, userId, userRole, userName, userProfilePic,
         <div className="border-t bg-white rounded-b-lg">
           {/* Admin Actions */}
           {userRole === 'admin' && ticketStatus === 'open' && (
-            <div className="px-4 py-3 border-b bg-yellow-50 flex gap-2">
+            <div className="px-4 py-3 border-b bg-yellow-50 flex flex-col gap-2">
+              <p className="text-xs text-orange-700 font-semibold">
+                ⚠️ {supportingUser?.name} is waiting for your response
+              </p>
               <button
                 onClick={handleAcceptRequest}
-                className="flex-1 px-3 py-2 bg-green-500 text-white text-sm font-semibold rounded hover:bg-green-600 transition"
+                className="flex-1 px-4 py-2 bg-green-600 text-white text-sm font-bold rounded-lg hover:bg-green-700 transition shadow-md"
               >
-                Accept Request
+                ✅ Accept Support Request
               </button>
             </div>
           )}
