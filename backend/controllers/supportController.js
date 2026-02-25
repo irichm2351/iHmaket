@@ -72,21 +72,29 @@ exports.createSupportMessage = async (req, res) => {
         lastMessage: trimmedText,
         lastMessageAt: new Date()
       });
+      console.log(`✅ New support ticket created: ${ticket._id} by user ${req.user.name}`);
     } else {
       ticket.lastMessage = trimmedText;
       ticket.lastMessageAt = new Date();
       await ticket.save();
+      console.log(`📝 Updated existing ticket: ${ticket._id}`);
     }
 
     const admins = await User.find({ role: 'admin', isActive: true }).select('name profilePic');
+    console.log(`👥 Found ${admins.length} active admin(s):`, admins.map(a => a.name).join(', '));
 
     const io = req.app.get('io');
     const onlineUsers = req.app.get('onlineUsers');
+    console.log(`🌐 Total online users: ${onlineUsers.size}`);
+    console.log(`🔍 Online user IDs:`, Array.from(onlineUsers.keys()));
 
+    let notifiedCount = 0;
     admins.forEach((admin) => {
       const adminSocketId = onlineUsers.get(admin._id.toString());
+      console.log(`🔍 Admin ${admin.name} (${admin._id}): ${adminSocketId ? `✅ Online (${adminSocketId})` : '❌ Offline'}`);
+      
       if (adminSocketId) {
-        io.to(adminSocketId).emit('support_request', {
+        const eventData = {
           ticketId: ticket._id,
           user: {
             _id: req.user._id,
@@ -95,9 +103,15 @@ exports.createSupportMessage = async (req, res) => {
           },
           lastMessage: trimmedText,
           createdAt: ticket.createdAt
-        });
+        };
+        
+        console.log(`📤 Emitting support_request to admin ${admin.name}:`, eventData);
+        io.to(adminSocketId).emit('support_request', eventData);
+        notifiedCount++;
       }
     });
+
+    console.log(`✅ Notified ${notifiedCount} online admin(s) about support request from ${req.user.name}`);
 
     return res.status(201).json({
       success: true,

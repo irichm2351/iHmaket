@@ -126,6 +126,21 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'OK', message: 'ServiceHub API is running' });
 });
 
+// Debug route to check online users and socket connections
+app.get('/api/debug/online-users', (req, res) => {
+  const onlineUsers = req.app.get('onlineUsers');
+  const onlineUserIds = Array.from(onlineUsers.keys());
+  const onlineSocketIds = Array.from(onlineUsers.values());
+  
+  res.json({
+    status: 'OK',
+    totalOnline: onlineUsers.size,
+    onlineUserIds,
+    onlineSocketIds,
+    timestamp: new Date().toISOString()
+  });
+});
+
 // Cloudinary configuration test route
 app.get('/api/cloudinary-check', (req, res) => {
   const cloudinary = require('./config/cloudinary');
@@ -158,7 +173,11 @@ io.on('connection', (socket) => {
   // User joins with their ID
   socket.on('user_connected', (userId) => {
     onlineUsers.set(userId, socket.id);
-    console.log(`User ${userId} connected with socket ${socket.id}`);
+    console.log(`👤 User ${userId} connected with socket ${socket.id}`);
+    console.log(`📊 Total online users: ${onlineUsers.size}`);
+    
+    // Log all online user IDs for debugging
+    console.log(`🌐 Currently online:`, Array.from(onlineUsers.keys()));
   });
 
   // Handle sending messages
@@ -182,7 +201,8 @@ io.on('connection', (socket) => {
     for (let [userId, socketId] of onlineUsers.entries()) {
       if (socketId === socket.id) {
         onlineUsers.delete(userId);
-        console.log(`User ${userId} disconnected`);
+        console.log(`👋 User ${userId} disconnected`);
+        console.log(`📊 Remaining online users: ${onlineUsers.size}`);
         break;
       }
     }

@@ -4,6 +4,7 @@ import { FiMessageCircle } from 'react-icons/fi';
 import Navbar from './Navbar';
 import Footer from './Footer';
 import SupportChatModal from './SupportChatModal';
+import SocketDebugPanel from './SocketDebugPanel';
 import useAuthStore from '../store/authStore';
 import useMessageStore from '../store/messageStore';
 import { messageAPI, supportAPI } from '../utils/api';
@@ -50,10 +51,35 @@ const Layout = () => {
       return;
     }
 
+    debugSupport.info('User authenticated, connecting socket', {
+      userId: user._id,
+      userName: user.name,
+      userRole: user.role
+    });
+
     connectSocket(user._id);
+
+    // Verify socket connection after a short delay
+    setTimeout(() => {
+      if (socket.connected) {
+        debugSupport.success('Socket connection verified', {
+          socketId: socket.id,
+          userId: user._id
+        });
+      } else {
+        debugSupport.error('Socket not connected after timeout', {
+          userId: user._id
+        });
+      }
+    }, 2000);
 
     // Admin listener for support requests
     if (user?.role === 'admin') {
+      debugSupport.info('Setting up admin support request listener', {
+        adminId: user._id,
+        adminName: user.name
+      });
+
       const handleSupportRequest = (data) => {
         console.log('[Layout] Admin received support request:', data);
         debugSupport.socket('Admin received support request', { 
@@ -87,7 +113,16 @@ const Layout = () => {
       };
 
       socket.on('support_request', handleSupportRequest);
-      return () => socket.off('support_request', handleSupportRequest);
+      debugSupport.success('Admin support request listener registered', {
+        adminId: user._id
+      });
+
+      return () => {
+        socket.off('support_request', handleSupportRequest);
+        debugSupport.info('Admin support request listener removed', {
+          adminId: user._id
+        });
+      };
     }
 
     // User listener for regular messages
@@ -206,6 +241,11 @@ const Layout = () => {
             }
           }}
         />
+      )}
+
+      {/* Socket Debug Panel - Development/Testing */}
+      {isAuthenticated && (
+        <SocketDebugPanel />
       )}
     </div>
   );
