@@ -1,8 +1,9 @@
 import { useEffect, useRef } from 'react';
-import { Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { Outlet, useLocation } from 'react-router-dom';
 import { FiMessageCircle } from 'react-icons/fi';
 import Navbar from './Navbar';
 import Footer from './Footer';
+import SupportChatModal from './SupportChatModal';
 import useAuthStore from '../store/authStore';
 import useMessageStore from '../store/messageStore';
 import { messageAPI, userAPI } from '../utils/api';
@@ -11,15 +12,15 @@ import toast from 'react-hot-toast';
 
 const Layout = () => {
   const location = useLocation();
-  const navigate = useNavigate();
   const { isAuthenticated, user } = useAuthStore();
   const { setConversations, incrementUnread, reset } = useMessageStore();
   const notificationSoundRef = useRef(null);
+  const [showChatModal, setShowChatModal] = useState(false);
+  const [supportAdmin, setSupportAdmin] = useState(null);
 
   const handleContactSupport = async () => {
     if (!isAuthenticated) {
       toast.error('Please login to contact support');
-      navigate('/login');
       return;
     }
 
@@ -32,9 +33,8 @@ const Layout = () => {
         return;
       }
 
-      // Navigate to messages with admin userId
-      navigate(`/messages?userId=${admin._id}`);
-      toast.success('Opening support chat...');
+      setSupportAdmin(admin);
+      setShowChatModal(true);
     } catch (error) {
       toast.error(error.response?.data?.message || 'Failed to contact support');
     }
@@ -128,6 +128,15 @@ const Layout = () => {
           <FiMessageCircle size={24} className="group-hover:animate-pulse" />
           <span className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-white animate-pulse"></span>
         </button>
+      )}
+
+      {/* Support Chat Modal */}
+      {showChatModal && supportAdmin && (
+        <SupportChatModal
+          admin={supportAdmin}
+          userId={user?._id}
+          onClose={() => setShowChatModal(false)}
+        />
       )}
     </div>
   );
