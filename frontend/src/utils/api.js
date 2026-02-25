@@ -92,14 +92,9 @@ export const userAPI = {
 
 // Support API
 export const supportAPI = {
-  debugGetOnlineAdmins: () => api.get('/support/debug/online-admins'),
   createSupportMessage: (data) => api.post('/support/messages', data),
-  getSupportMessages: (ticketId) => api.get(`/support/messages/${ticketId}`),
-  sendSupportMessage: (ticketId, data) => api.post(`/support/tickets/${ticketId}/message`, data),
-  acceptSupportRequest: (ticketId, data) => api.post(`/support/tickets/${ticketId}/accept`, data),
   getOpenTickets: () => api.get('/support/tickets/open'),
-  getTicketDetails: (ticketId) => api.get(`/support/tickets/${ticketId}`),
-  updateTicketStatus: (ticketId, status) => api.put(`/support/tickets/${ticketId}/status`, { status })
+  claimTicket: (ticketId) => api.post(`/support/tickets/${ticketId}/claim`)
 };
 
 // Service API
@@ -143,7 +138,6 @@ export const reviewAPI = {
 export const messageAPI = {
   sendMessage: (data) => api.post('/messages', data),
   getConversations: () => api.get('/messages/conversations'),
-  getConversation: (userId, params) => api.get(`/messages/${userId}`, { params }),
   getMessages: (userId, params) => api.get(`/messages/${userId}`, { params }),
   markAsRead: (userId) => api.put(`/messages/${userId}/read`),
   deleteMessage: (id) => api.delete(`/messages/${id}`),
