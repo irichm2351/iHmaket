@@ -1,11 +1,10 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { FiSearch, FiArrowRight, FiMessageCircle } from 'react-icons/fi';
-import { serviceAPI, userAPI } from '../utils/api';
+import { FiSearch, FiArrowRight } from 'react-icons/fi';
+import { serviceAPI } from '../utils/api';
 import ServiceCard from '../components/ServiceCard';
 import Loader from '../components/Loader';
 import useAuthStore from '../store/authStore';
-import toast from 'react-hot-toast';
 
 const categories = [
   { name: 'Plumbing', icon: '🔧' },
@@ -20,7 +19,7 @@ const categories = [
 
 const Home = () => {
   const navigate = useNavigate();
-  const { isAuthenticated, user } = useAuthStore();
+  const { isAuthenticated } = useAuthStore();
   const [searchQuery, setSearchQuery] = useState('');
   const [featuredServices, setFeaturedServices] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -44,30 +43,6 @@ const Home = () => {
     e.preventDefault();
     if (searchQuery.trim()) {
       navigate(`/services?search=${searchQuery}`);
-    }
-  };
-
-  const handleContactSupport = async () => {
-    if (!isAuthenticated) {
-      toast.error('Please login to contact support');
-      navigate('/login');
-      return;
-    }
-
-    try {
-      const response = await userAPI.getSupportAdmin();
-      const admin = response.data.admin;
-
-      if (!admin) {
-        toast.error('No support admin available at the moment');
-        return;
-      }
-
-      // Navigate to messages with admin userId
-      navigate(`/messages?userId=${admin._id}`);
-      toast.success('Opening support chat...');
-    } catch (error) {
-      toast.error(error.response?.data?.message || 'Failed to contact support');
     }
   };
 
@@ -220,18 +195,6 @@ const Home = () => {
             </Link>
           </div>
         </section>
-      )}
-
-      {/* Floating Support Chat Button */}
-      {user?.role !== 'admin' && (
-        <button
-          onClick={handleContactSupport}
-          className="fixed bottom-6 right-6 z-40 w-14 h-14 bg-gradient-to-r from-primary-600 to-primary-700 text-white rounded-full shadow-lg hover:shadow-xl hover:scale-110 transition-all duration-300 flex items-center justify-center group"
-          title="Contact Support"
-        >
-          <FiMessageCircle size={24} className="group-hover:animate-pulse" />
-          <span className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-white animate-pulse"></span>
-        </button>
       )}
     </div>
   );
