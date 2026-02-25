@@ -11,7 +11,10 @@ import toast from 'react-hot-toast';
 
 const Messages = () => {
   const { user, isAuthenticated } = useAuthStore();
-  const { setConversations: setStoreConversations } = useMessageStore();
+  const {
+    setConversations: setStoreConversations,
+    decrementSupportCount
+  } = useMessageStore();
   const [searchParams] = useSearchParams();
   const [conversations, setConversations] = useState([]);
   const [selectedConversation, setSelectedConversation] = useState(null);
@@ -359,6 +362,7 @@ const Messages = () => {
 
       setSelectedConversation(newConversation);
       setSupportRequests((prev) => prev.filter((ticketItem) => ticketItem._id !== ticketId));
+      decrementSupportCount();
     } catch (error) {
       toast.error(error.response?.data?.message || 'Failed to claim support request');
     }

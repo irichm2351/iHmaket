@@ -6,14 +6,20 @@ import Footer from './Footer';
 import SupportChatModal from './SupportChatModal';
 import useAuthStore from '../store/authStore';
 import useMessageStore from '../store/messageStore';
-import { messageAPI } from '../utils/api';
+import { messageAPI, supportAPI } from '../utils/api';
 import socket, { connectSocket } from '../utils/socket';
 import toast from 'react-hot-toast';
 
 const Layout = () => {
   const location = useLocation();
   const { isAuthenticated, user } = useAuthStore();
-  const { setConversations, incrementUnread, reset } = useMessageStore();
+  const {
+    setConversations,
+    incrementUnread,
+    reset,
+    setSupportCount,
+    incrementSupportCount
+  } = useMessageStore();
   const notificationSoundRef = useRef(null);
   const [showChatModal, setShowChatModal] = useState(false);
 
@@ -94,6 +100,29 @@ const Layout = () => {
 
     loadUnreadCounts();
   }, [isAuthenticated, user?._id, setConversations]);
+
+  useEffect(() => {
+    if (!isAuthenticated || user?.role !== 'admin') return;
+
+    const loadSupportCount = async () => {
+      try {
+        const response = await supportAPI.getOpenTickets();
+        const tickets = response.data.tickets || [];
+        setSupportCount(tickets.length);
+      } catch {
+        // Ignore support count failures
+      }
+    };
+
+    loadSupportCount();
+
+    const handleSupportRequest = () => {
+      incrementSupportCount();
+    };
+
+    socket.on('support_request', handleSupportRequest);
+    return () => socket.off('support_request', handleSupportRequest);
+  }, [isAuthenticated, user?.role, setSupportCount, incrementSupportCount]);
 
   return (
     <div className="min-h-screen flex flex-col">
