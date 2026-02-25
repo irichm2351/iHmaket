@@ -216,6 +216,19 @@ const Navbar = () => {
                 >
                   Saved Services
                 </Link>
+                {user?.role === 'admin' && (
+                  <>
+                    <hr className="my-2" />
+                    <Link
+                      to="/admin"
+                      className="block px-4 py-2 text-primary-600 font-semibold hover:bg-gray-100 rounded"
+                      onClick={() => setIsMenuOpen(false)}
+                    >
+                      Admin Dashboard
+                    </Link>
+                  </>
+                )}
+                <hr className="my-2" />
                 <button
                   onClick={handleLogout}
                   className="block w-full text-left px-4 py-2 text-red-600 hover:bg-gray-100 rounded"
