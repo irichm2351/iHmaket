@@ -4,6 +4,7 @@ import { FiSearch, FiArrowRight } from 'react-icons/fi';
 import { serviceAPI, getImageUrl } from '../utils/api';
 import ServiceCard from '../components/ServiceCard';
 import Loader from '../components/Loader';
+import useAuthStore from '../store/authStore';
 
 const categories = [
   { name: 'Plumbing', icon: '🔧' },
@@ -18,6 +19,7 @@ const categories = [
 
 const Home = () => {
   const navigate = useNavigate();
+  const { isAuthenticated } = useAuthStore();
   const [searchQuery, setSearchQuery] = useState('');
   const [featuredServices, setFeaturedServices] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -175,23 +177,25 @@ const Home = () => {
         </div>
       </section>
 
-      {/* CTA Section */}
-      <section className="py-16 bg-primary-600 text-white">
-        <div className="max-w-4xl mx-auto text-center px-4 sm:px-6 lg:px-8">
-          <h2 className="text-3xl md:text-4xl font-bold mb-4">
-            Are You a Service Provider?
-          </h2>
-          <p className="text-xl mb-8 text-primary-100">
-            Join our platform and connect with thousands of customers looking for your services
-          </p>
-          <Link
-            to="/register"
-            className="btn bg-white text-primary-600 hover:bg-gray-100 text-lg px-8 py-3 inline-block"
-          >
-            Get Started Today
-          </Link>
-        </div>
-      </section>
+      {/* CTA Section - Only show when not authenticated */}
+      {!isAuthenticated && (
+        <section className="py-16 bg-primary-600 text-white">
+          <div className="max-w-4xl mx-auto text-center px-4 sm:px-6 lg:px-8">
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">
+              Are You a Service Provider?
+            </h2>
+            <p className="text-xl mb-8 text-primary-100">
+              Join our platform and connect with thousands of customers looking for your services
+            </p>
+            <Link
+              to="/register"
+              className="btn bg-white text-primary-600 hover:bg-gray-100 text-lg px-8 py-3 inline-block"
+            >
+              Get Started Today
+            </Link>
+          </div>
+        </section>
+      )}
     </div>
   );
 };
