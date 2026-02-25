@@ -116,8 +116,36 @@ const Layout = () => {
 
     loadSupportCount();
 
-    const handleSupportRequest = () => {
+    const handleSupportRequest = (data) => {
       incrementSupportCount();
+      
+      // Show toast notification
+      toast.success(`New support request from ${data?.user?.name || 'User'}`, {
+        duration: 5000,
+        icon: '🔔',
+      });
+
+      // Play notification sound
+      if (notificationSoundRef.current) {
+        notificationSoundRef.current.play().catch(() => {});
+      }
+
+      // Browser notification
+      if ('Notification' in window && Notification.permission === 'granted') {
+        const notification = new Notification('New Support Request', {
+          body: `${data?.user?.name || 'A user'} needs assistance`,
+          icon: data?.user?.profilePic || '/favicon.ico',
+          badge: '/favicon.ico',
+          tag: 'support-request'
+        });
+
+        notification.onclick = () => {
+          window.focus();
+          notification.close();
+        };
+
+        setTimeout(() => notification.close(), 5000);
+      }
     };
 
     socket.on('support_request', handleSupportRequest);

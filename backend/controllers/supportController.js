@@ -2,6 +2,70 @@ const SupportTicket = require('../models/SupportTicket');
 const User = require('../models/User');
 const Message = require('../models/Message');
 
+// @desc    Create support ticket when user opens chat
+// @route   POST /api/support/tickets/create
+// @access  Private
+exports.createSupportTicket = async (req, res) => {
+  try {
+    // Check if user already has an open support ticket
+    let ticket = await SupportTicket.findOne({
+      userId: req.user._id,
+      status: { $in: ['open', 'assigned'] }
+    }).sort({ createdAt: -1 });
+
+    // If ticket already exists, return it
+    if (ticket) {
+      return res.status(200).json({
+        success: true,
+        ticket,
+        alreadyExists: true
+      });
+    }
+
+    // Create new support ticket
+    ticket = await SupportTicket.create({
+      userId: req.user._id,
+      status: 'open',
+      lastMessage: 'User opened support chat',
+      lastMessageAt: new Date()
+    });
+
+    // Get all active admins
+    const admins = await User.find({ role: 'admin', isActive: true }).select('name profilePic');
+
+    // Notify all admins via socket
+    const io = req.app.get('io');
+    const onlineUsers = req.app.get('onlineUsers');
+
+    admins.forEach((admin) => {
+      const adminSocketId = onlineUsers.get(admin._id.toString());
+      if (adminSocketId) {
+        io.to(adminSocketId).emit('support_request', {
+          ticketId: ticket._id,
+          user: {
+            _id: req.user._id,
+            name: req.user.name,
+            profilePic: req.user.profilePic
+          },
+          lastMessage: 'User opened support chat',
+          createdAt: ticket.createdAt
+        });
+      }
+    });
+
+    return res.status(201).json({
+      success: true,
+      ticket
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Error creating support ticket',
+      error: error.message
+    });
+  }
+};
+
 // @desc    Create support ticket message from user
 // @route   POST /api/support/messages
 // @access  Private

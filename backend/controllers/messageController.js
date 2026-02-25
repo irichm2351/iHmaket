@@ -153,15 +153,7 @@ exports.getConversations = async (req, res) => {
         isRead: false
       });
 
-      const otherUser = await User.findById(userId).select('name profilePic role');
-
-      if (!otherUser) {
-        continue;
-      }
-
-      if (req.user.role !== 'admin' && otherUser.role === 'admin') {
-        continue;
-      }
+      const otherUser = await User.findById(userId).select('name profilePic');
 
       conversations.push({
         user: otherUser,

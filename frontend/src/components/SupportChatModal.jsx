@@ -17,8 +17,26 @@ const SupportChatModal = ({ onClose, userId }) => {
   const [sending, setSending] = useState(false);
   const [assignedAdmin, setAssignedAdmin] = useState(null);
   const [ticketId, setTicketId] = useState(null);
+  const [isMinimized, setIsMinimized] = useState(false);
   const messagesEndRef = useRef(null);
   const socketRef = useRef(null);
+
+  // Create support ticket when modal opens
+  useEffect(() => {
+    const initializeSupportTicket = async () => {
+      try {
+        const response = await supportAPI.createSupportTicket();
+        if (response.data?.ticket?._id) {
+          setTicketId(response.data.ticket._id);
+        }
+      } catch (error) {
+        console.error('Failed to create support ticket:', error);
+        // Don't show error to user, they can still send messages
+      }
+    };
+
+    initializeSupportTicket();
+  }, []);
 
   useEffect(() => {
     socketRef.current = socket;
@@ -42,6 +60,8 @@ const SupportChatModal = ({ onClose, userId }) => {
           createdAt: new Date()
         }
       ]);
+
+      setIsMinimized(true);
     };
 
     socketRef.current.on('support_assigned', handleSupportAssigned);
@@ -73,6 +93,31 @@ const SupportChatModal = ({ onClose, userId }) => {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
+
+  if (isMinimized) {
+    return (
+      <div className="fixed bottom-6 right-6 z-50">
+        <button
+          onClick={() => setIsMinimized(false)}
+          className="flex items-center gap-2 bg-white border border-gray-200 shadow-lg rounded-full px-4 py-2 hover:bg-gray-50 transition"
+        >
+          <span className="inline-flex w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+          <span className="text-sm font-medium text-gray-800">
+            Support Team
+          </span>
+          {assignedAdmin?.name && (
+            <span className="text-xs text-gray-500">({assignedAdmin.name})</span>
+          )}
+        </button>
+        <button
+          onClick={onClose}
+          className="ml-2 text-xs text-gray-500 hover:text-gray-700"
+        >
+          Close
+        </button>
+      </div>
+    );
+  }
 
   const handleSendMessage = async (e) => {
     e.preventDefault();
