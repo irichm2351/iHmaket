@@ -33,19 +33,26 @@ exports.createSupportTicket = async (req, res) => {
     // Populate the user field
     await ticket.populate('userId', 'name profilePic email');
 
-    // Get all active admins
-    const admins = await User.find({ role: 'admin', isActive: true }).select('_id name profilePic');
+    // Get all admins (regardless of active status)
+    const admins = await User.find({ role: 'admin' }).select('_id name profilePic email');
 
     console.log(`[Support Ticket] Created ticket ${ticket._id} for user ${req.user.name}`);
-    console.log(`[Support Ticket] Notifying ${admins.length} admin(s)`);
+    console.log(`[Support Ticket] Found ${admins.length} admin(s)`);
+    if (admins.length > 0) {
+      console.log(`[Support Ticket] Admin emails:`, admins.map(a => a.email).join(', '));
+    }
 
     // Notify all admins via socket
     const io = req.app.get('io');
     const onlineUsers = req.app.get('onlineUsers');
 
+    console.log(`[Support Ticket] Online users map size:`, onlineUsers.size);
+    console.log(`[Support Ticket] Online user IDs:`, Array.from(onlineUsers.keys()).join(', '));
+
+    let notifiedCount = 0;
     admins.forEach((admin) => {
       const adminSocketId = onlineUsers.get(admin._id.toString());
-      console.log(`[Support Ticket] Admin ${admin.name} online:`, !!adminSocketId);
+      console.log(`[Support Ticket] Checking admin ${admin.name} (${admin._id.toString()}): online=${!!adminSocketId}`);
       
       if (adminSocketId) {
         io.to(adminSocketId).emit('support_request', {
@@ -59,9 +66,12 @@ exports.createSupportTicket = async (req, res) => {
           createdAt: ticket.createdAt,
           status: ticket.status
         });
-        console.log(`[Support Ticket] Emitted support_request to admin ${admin.name}`);
+        console.log(`[Support Ticket] ✅ Emitted support_request to admin ${admin.name}`);
+        notifiedCount++;
       }
     });
+
+    console.log(`[Support Ticket] Total admins notified: ${notifiedCount}/${admins.length}`);
 
     return res.status(201).json({
       success: true,
@@ -153,10 +163,12 @@ exports.createSupportMessage = async (req, res) => {
       await ticket.save();
     }
 
-    const admins = await User.find({ role: 'admin', isActive: true }).select('name profilePic');
+    const admins = await User.find({ role: 'admin' }).select('_id name profilePic email');
 
     const io = req.app.get('io');
     const onlineUsers = req.app.get('onlineUsers');
+
+    console.log(`[Support Message] Found ${admins.length} admin(s), ${onlineUsers.size} online users`);
 
     admins.forEach((admin) => {
       const adminSocketId = onlineUsers.get(admin._id.toString());
