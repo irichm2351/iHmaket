@@ -48,6 +48,7 @@ const Layout = () => {
       return;
     }
 
+    console.log('[Layout] Connecting socket for user:', user._id, 'Role:', user.role);
     connectSocket(user._id);
 
     const handleReceiveMessage = (data) => {
@@ -104,10 +105,13 @@ const Layout = () => {
   useEffect(() => {
     if (!isAuthenticated || user?.role !== 'admin') return;
 
+    console.log('[Layout] Admin detected, setting up support request listener');
+
     const loadSupportCount = async () => {
       try {
         const response = await supportAPI.getOpenTickets();
         const tickets = response.data.tickets || [];
+        console.log('[Layout] Loaded support count:', tickets.length);
         setSupportCount(tickets.length);
       } catch {
         // Ignore support count failures

@@ -9,14 +9,17 @@ const socket = io(SOCKET_URL, {
 
 export const connectSocket = (userId) => {
   if (!socket.connected) {
+    console.log('[Socket] Connecting socket...');
     socket.connect();
   }
 
   if (userId) {
     if (socket.connected) {
+      console.log('[Socket] Emitting user_connected with userId:', userId);
       socket.emit('user_connected', userId);
     } else {
       socket.once('connect', () => {
+        console.log('[Socket] Connected! Emitting user_connected with userId:', userId);
         socket.emit('user_connected', userId);
       });
     }

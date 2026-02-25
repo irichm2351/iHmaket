@@ -157,8 +157,10 @@ io.on('connection', (socket) => {
 
   // User joins with their ID
   socket.on('user_connected', (userId) => {
-    onlineUsers.set(userId, socket.id);
-    console.log(`User ${userId} connected with socket ${socket.id}`);
+    onlineUsers.set(userId.toString(), socket.id);
+    console.log(`✅ User ${userId} connected with socket ${socket.id}`);
+    console.log(`📊 Online users count: ${onlineUsers.size}`);
+    console.log(`📋 Online users:`, Array.from(onlineUsers.keys()));
   });
 
   // Handle sending messages
