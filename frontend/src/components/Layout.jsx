@@ -25,6 +25,7 @@ const Layout = () => {
   const notificationSoundRef = useRef(null);
   const [showChatModal, setShowChatModal] = useState(false);
   const [supportAlerts, setSupportAlerts] = useState([]);
+  const [currentSupportTicket, setCurrentSupportTicket] = useState(null);
 
   const handleContactSupport = () => {
     if (!isAuthenticated) {
@@ -33,6 +34,37 @@ const Layout = () => {
     }
 
     setShowChatModal(true);
+  };
+
+  // When admin opens support modal, fetch open tickets if no alerts
+  const handleOpenSupportModal = async () => {
+    setShowChatModal(true);
+    
+    if (user?.role === 'admin' && supportAlerts.length === 0) {
+      try {
+        const response = await supportAPI.getOpenTickets();
+        const tickets = response.data.tickets || [];
+        
+        if (tickets.length > 0) {
+          // Convert first ticket to alert format
+          const firstTicket = tickets[0];
+          setCurrentSupportTicket({
+            ticketId: firstTicket._id,
+            user: {
+              _id: firstTicket.userId._id,
+              name: firstTicket.userId.name,
+              profilePic: firstTicket.userId.profilePic
+            },
+            lastMessage: firstTicket.lastMessage,
+            createdAt: firstTicket.createdAt
+          });
+        }
+      } catch (error) {
+        console.error('Failed to fetch open tickets:', error);
+      }
+    } else if (supportAlerts.length > 0) {
+      setCurrentSupportTicket(supportAlerts[supportAlerts.length - 1]);
+    }
   };
 
   useEffect(() => {
@@ -90,6 +122,11 @@ const Layout = () => {
         
         setSupportAlerts((prev) => [...prev, data]);
         incrementSupportCount();
+        
+        // If modal is open and no current ticket, set this as current
+        if (showChatModal && !currentSupportTicket) {
+          setCurrentSupportTicket(data);
+        }
         
         // Show toast
         toast.success(`${data?.user?.name} needs help!`, {
@@ -204,15 +241,15 @@ const Layout = () => {
       {/* Floating Support Chat Button - Users & Admins */}
       {typeof window !== 'undefined' && isAuthenticated && (
         <button
-          onClick={() => setShowChatModal(true)}
+          onClick={handleOpenSupportModal}
           className="fixed bottom-8 right-8 z-40 w-14 h-14 bg-gradient-to-r from-primary-600 to-primary-700 text-white rounded-full shadow-lg hover:shadow-xl hover:scale-110 transition-all duration-300 flex items-center justify-center group"
           title={user?.role === 'admin' ? 'Support Center' : 'Contact Support'}
           aria-label="Support"
         >
           <FiMessageCircle size={24} className="group-hover:animate-pulse" />
-          {user?.role === 'admin' && incrementSupportCount && (
+          {user?.role === 'admin' && supportAlerts.length > 0 && (
             <span className="absolute -top-1 -right-1 w-5 h-5 bg-yellow-500 text-white text-xs font-bold rounded-full flex items-center justify-center">
-              {supportAlerts.length > 0 ? supportAlerts.length : ''}
+              {supportAlerts.length}
             </span>
           )}
           <span className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-white animate-pulse"></span>
@@ -226,9 +263,10 @@ const Layout = () => {
           userRole={user?.role}
           userName={user?.name}
           userProfilePic={user?.profilePic}
-          supportAlert={supportAlerts[supportAlerts.length - 1]} // Pass latest alert to admin
+          supportAlert={currentSupportTicket}
           onClose={() => {
             setShowChatModal(false);
+            setCurrentSupportTicket(null);
             if (user?.role === 'admin' && supportAlerts.length > 0) {
               setSupportAlerts((prev) => prev.slice(1)); // Remove the current alert
             }
