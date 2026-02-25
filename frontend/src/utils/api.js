@@ -87,6 +87,7 @@ export const userAPI = {
   getUserById: (id) => api.get(`/users/${id}`),
   toggleSaveService: (serviceId) => api.post(`/users/save-service/${serviceId}`),
   getSavedServices: () => api.get('/users/saved-services'),
+  getSupportAdmin: () => api.get('/users/support/admin'),
 };
 
 // Service API

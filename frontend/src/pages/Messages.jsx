@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { format, formatDistanceToNow } from 'date-fns';
-import { FiSearch, FiSend, FiUser } from 'react-icons/fi';
+import { FiSearch, FiSend, FiUser, FiHelpCircle } from 'react-icons/fi';
 import { messageAPI, userAPI } from '../utils/api';
 import useAuthStore from '../store/authStore';
 import useMessageStore from '../store/messageStore';
@@ -287,6 +287,41 @@ const Messages = () => {
     });
   };
 
+  const handleContactSupport = async () => {
+    try {
+      // Check if already have a conversation with an admin
+      const adminConversation = conversations.find(c => c.user?.role === 'admin');
+      
+      if (adminConversation) {
+        setSelectedConversation(adminConversation);
+        toast.success('Opening support chat');
+        return;
+      }
+
+      // Fetch admin user
+      const response = await userAPI.getSupportAdmin();
+      const admin = response.data.admin;
+
+      if (!admin) {
+        toast.error('No support admin available at the moment');
+        return;
+      }
+
+      // Create new conversation with admin
+      const newConversation = {
+        user: admin,
+        lastMessage: null,
+        unreadCount: 0
+      };
+
+      setConversations((prev) => [newConversation, ...prev]);
+      setSelectedConversation(newConversation);
+      toast.success('Support chat opened. Send a message to get help!');
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Failed to contact support');
+    }
+  };
+
   const filteredConversations = useMemo(() => {
     if (!search.trim()) return conversations;
     return conversations.filter((c) =>
@@ -325,6 +360,17 @@ const Messages = () => {
             />
           </div>
 
+          {/* Contact Support Button */}
+          {user?.role !== 'admin' && (
+            <button
+              onClick={handleContactSupport}
+              className="w-full mb-4 px-4 py-3 bg-gradient-to-r from-primary-600 to-primary-700 text-white rounded-lg hover:from-primary-700 hover:to-primary-800 transition-all flex items-center justify-center gap-2 font-medium shadow-md"
+            >
+              <FiHelpCircle size={20} />
+              Contact Support / Help
+            </button>
+          )}
+
           {loadingConversations ? (
             <div className="flex-1 flex items-center justify-center">
               <Loader size="md" />
@@ -349,9 +395,16 @@ const Messages = () => {
                     />
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between">
-                        <p className="font-semibold truncate">
-                          {conversation.user?.name}
-                        </p>
+                        <div className="flex items-center gap-2">
+                          <p className="font-semibold truncate">
+                            {conversation.user?.name}
+                          </p>
+                          {conversation.user?.role === 'admin' && (
+                            <span className="px-2 py-0.5 text-xs bg-blue-100 text-blue-700 rounded-full font-medium">
+                              Support
+                            </span>
+                          )}
+                        </div>
                         {conversation.lastMessage?.createdAt && (
                           <span className="text-xs text-gray-500">
                             {formatDistanceToNow(new Date(conversation.lastMessage.createdAt), { addSuffix: true })}
@@ -388,10 +441,17 @@ const Messages = () => {
                   alt={selectedConversation.user?.name}
                   className="w-10 h-10 rounded-full object-cover"
                 />
-                <div>
-                  <p className="font-semibold">
-                    {selectedConversation.user?.name}
-                  </p>
+                <div className="flex-1">
+                  <div className="flex items-center gap-2">
+                    <p className="font-semibold">
+                      {selectedConversation.user?.name}
+                    </p>
+                    {selectedConversation.user?.role === 'admin' && (
+                      <span className="px-2 py-0.5 text-xs bg-blue-100 text-blue-700 rounded-full font-medium">
+                        Support
+                      </span>
+                    )}
+                  </div>
                   <p className="text-xs text-gray-500">Online</p>
                 </div>
               </div>

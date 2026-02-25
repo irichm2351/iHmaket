@@ -166,3 +166,33 @@ exports.getProviders = async (req, res) => {
     });
   }
 };
+
+// @desc    Get admin for support chat
+// @route   GET /api/users/support-admin
+// @access  Private
+exports.getSupportAdmin = async (req, res) => {
+  try {
+    // Find an active admin user
+    const admin = await User.findOne({ role: 'admin', isActive: true })
+      .select('-password')
+      .sort({ createdAt: 1 }); // Get the first admin created
+
+    if (!admin) {
+      return res.status(404).json({
+        success: false,
+        message: 'No admin available for support at the moment'
+      });
+    }
+
+    res.json({
+      success: true,
+      admin
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching support admin',
+      error: error.message
+    });
+  }
+};
