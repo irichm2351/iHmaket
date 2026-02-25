@@ -173,11 +173,12 @@ io.on('connection', (socket) => {
   // User joins with their ID
   socket.on('user_connected', (userId) => {
     onlineUsers.set(userId, socket.id);
-    console.log(`👤 User ${userId} connected with socket ${socket.id}`);
+    console.log(`\n========== USER CONNECTED ==========`);
+    console.log(`👤 User ID: ${userId}`);
+    console.log(`🔌 Socket ID: ${socket.id}`);
     console.log(`📊 Total online users: ${onlineUsers.size}`);
-    
-    // Log all online user IDs for debugging
-    console.log(`🌐 Currently online:`, Array.from(onlineUsers.keys()));
+    console.log(`🌐 All online user IDs:`, Array.from(onlineUsers.keys()));
+    console.log(`=================================\n`);
   });
 
   // Handle sending messages

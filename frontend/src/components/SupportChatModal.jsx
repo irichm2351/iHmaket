@@ -41,10 +41,17 @@ const SupportChatModal = ({ onClose, userId, userRole, userName, userProfilePic,
     if (userRole !== 'admin' && !ticketId) {
       const createTicket = async () => {
         try {
+          console.log('\n========== USER CREATING SUPPORT TICKET ==========');
+          console.log('User ID:', userId);
+          console.log('User Role:', userRole);
+          
           debugSupport.info('User creating support ticket', { userId });
           const response = await supportAPI.createSupportMessage({
             text: 'User opened support chat'
           });
+
+          console.log('Support ticket response:', response.data);
+          console.log('=================================================\n');
 
           if (response.data?.ticket?._id) {
             setTicketId(response.data.ticket._id);

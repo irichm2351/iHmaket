@@ -112,12 +112,25 @@ const Layout = () => {
 
     // Admin listener for support requests
     if (user?.role === 'admin') {
+      console.log('\\n========== ADMIN SETUP ==========');
+      console.log('Admin ID:', user._id);
+      console.log('Admin Name:', user.name);
+      console.log('Socket connected:', socket.connected);
+      console.log('Socket ID:', socket.id);
+      console.log('=================================\\n');
+      
       debugSupport.info('Setting up admin support request listener', {
         adminId: user._id,
         adminName: user.name
       });
 
       const handleSupportRequest = (data) => {
+        console.log('\n========== ADMIN RECEIVED SUPPORT REQUEST ==========');
+        console.log('Support request data:', data);
+        console.log('User name:', data?.user?.name);
+        console.log('Ticket ID:', data?.ticketId);
+        console.log('===================================================\n');
+        
         console.log('[Layout] Admin received support request:', data);
         debugSupport.socket('Admin received support request', { 
           userName: data?.user?.name,

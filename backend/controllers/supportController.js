@@ -47,6 +47,10 @@ exports.getDebugOnlineAdmins = async (req, res) => {
 // @access  Private
 exports.createSupportMessage = async (req, res) => {
   try {
+    console.log('\n========== CREATE SUPPORT MESSAGE CALLED ==========');
+    console.log('User:', req.user.name, '(', req.user._id, ')');
+    console.log('User role:', req.user.role);
+    
     const { text } = req.body;
 
     if (!text || !text.trim()) {
@@ -57,6 +61,7 @@ exports.createSupportMessage = async (req, res) => {
     }
 
     const trimmedText = text.trim();
+    console.log('Support message text:', trimmedText);
 
     // Find or create support ticket
     let ticket = await SupportTicket.findOne({
@@ -101,6 +106,12 @@ exports.createSupportMessage = async (req, res) => {
 
     const io = req.app.get('io');
     const onlineUsers = req.app.get('onlineUsers');
+
+    console.log('\n----- PREPARING TO BROADCAST -----');
+    console.log('IO object exists:', !!io);
+    console.log('OnlineUsers map exists:', !!onlineUsers);
+    console.log('Ticket ID:', ticket._id);
+    console.log('Ticket assigned to admin?:', !!ticket.assignedAdminId);
 
     // If assigned to specific admin, send directly to that admin
     if (ticket.assignedAdminId) {
