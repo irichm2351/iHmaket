@@ -117,8 +117,8 @@ const Layout = () => {
       </main>
       <Footer />
       
-      {/* Floating Support Chat Button */}
-      {user?.role !== 'admin' && (
+      {/* Floating Support Chat Button - Web/Desktop/Mobile Browser Only (Not for Phone App) */}
+      {typeof window !== 'undefined' && user?.role !== 'admin' && (
         <button
           onClick={handleContactSupport}
           className="fixed bottom-8 right-8 z-40 w-14 h-14 bg-gradient-to-r from-primary-600 to-primary-700 text-white rounded-full shadow-lg hover:shadow-xl hover:scale-110 transition-all duration-300 flex items-center justify-center group"
