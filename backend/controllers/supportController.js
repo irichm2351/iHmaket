@@ -2,100 +2,6 @@ const SupportTicket = require('../models/SupportTicket');
 const User = require('../models/User');
 const Message = require('../models/Message');
 
-// @desc    Create support ticket when user opens chat
-// @route   POST /api/support/tickets/create
-// @access  Private
-exports.createSupportTicket = async (req, res) => {
-  try {
-    // Check if user already has an open support ticket
-    let ticket = await SupportTicket.findOne({
-      userId: req.user._id,
-      status: { $in: ['open', 'assigned'] }
-    }).sort({ createdAt: -1 });
-
-    // If ticket already exists, return it (notify only on first creation)
-    if (ticket) {
-      return res.status(200).json({
-        success: true,
-        ticket,
-        alreadyExists: true
-      });
-    }
-
-    // Create new support ticket
-    ticket = await SupportTicket.create({
-      userId: req.user._id,
-      status: 'open',
-      lastMessage: 'User opened support chat',
-      lastMessageAt: new Date()
-    });
-
-    // Populate the user field
-    await ticket.populate('userId', 'name profilePic email');
-
-    // Get all admins (regardless of active status)
-    const admins = await User.find({ role: 'admin' }).select('_id name profilePic email');
-
-    console.log(`[Support Ticket] Created ticket ${ticket._id} for user ${req.user.name}`);
-    console.log(`[Support Ticket] Found ${admins.length} admin(s)`);
-    if (admins.length > 0) {
-      console.log(`[Support Ticket] Admin emails:`, admins.map(a => a.email).join(', '));
-    }
-
-    // Notify all admins via socket
-    const io = req.app.get('io');
-    const onlineUsers = req.app.get('onlineUsers');
-
-    console.log(`[Support Ticket] Online users map size:`, onlineUsers.size);
-    console.log(`[Support Ticket] Online user IDs:`, Array.from(onlineUsers.keys()).join(', '));
-
-    console.log(`\n[Support Ticket] 📝 Creating new support ticket`);
-    console.log(`[Support Ticket] User: ${req.user.name} (${req.user._id})`);
-
-    let notifiedCount = 0;
-    admins.forEach((admin) => {
-      const adminSocketId = onlineUsers.get(admin._id.toString());
-      console.log(`[Support Ticket] Checking admin ${admin.name}:`, {
-        adminId: admin._id.toString(),
-        online: !!adminSocketId,
-        socketId: adminSocketId || 'NOT_ONLINE'
-      });
-      
-      if (adminSocketId) {
-        console.log(`[Support Ticket] ✅ Emitting to admin ${admin.name}`);
-        io.to(adminSocketId).emit('support_request', {
-          ticketId: ticket._id,
-          user: {
-            _id: ticket.userId._id,
-            name: ticket.userId.name,
-            profilePic: ticket.userId.profilePic
-          },
-          lastMessage: ticket.lastMessage,
-          createdAt: ticket.createdAt,
-          status: ticket.status
-        });
-        notifiedCount++;
-      } else {
-        console.log(`[Support Ticket] ❌ Admin ${admin.name} NOT ONLINE`);
-      }
-    });
-
-    console.log(`[Support Ticket] 📊 Notified ${notifiedCount}/${admins.length} admins\n`);
-
-    return res.status(201).json({
-      success: true,
-      ticket
-    });
-  } catch (error) {
-    console.error('[Support Ticket] Error creating ticket:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Error creating support ticket',
-      error: error.message
-    });
-  }
-};
-
 // @desc    Create support ticket message from user
 // @route   POST /api/support/messages
 // @access  Private
@@ -172,12 +78,10 @@ exports.createSupportMessage = async (req, res) => {
       await ticket.save();
     }
 
-    const admins = await User.find({ role: 'admin' }).select('_id name profilePic email');
+    const admins = await User.find({ role: 'admin', isActive: true }).select('name profilePic');
 
     const io = req.app.get('io');
     const onlineUsers = req.app.get('onlineUsers');
-
-    console.log(`[Support Message] Found ${admins.length} admin(s), ${onlineUsers.size} online users`);
 
     admins.forEach((admin) => {
       const adminSocketId = onlineUsers.get(admin._id.toString());
@@ -298,6 +202,104 @@ exports.claimTicket = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Error claiming support ticket',
+      error: error.message
+    });
+  }
+};
+
+// @desc    Get ticket details
+// @route   GET /api/support/tickets/:ticketId
+// @access  Private
+exports.getTicketDetails = async (req, res) => {
+  try {
+    const { ticketId } = req.params;
+
+    const ticket = await SupportTicket.findById(ticketId)
+      .populate('userId', 'name profilePic email')
+      .populate('assignedAdminId', 'name profilePic email');
+
+    if (!ticket) {
+      return res.status(404).json({
+        success: false,
+        message: 'Support ticket not found'
+      });
+    }
+
+    // Check authorization - user or assigned admin can view
+    if (ticket.userId.toString() !== req.user._id.toString() && 
+        (!ticket.assignedAdminId || ticket.assignedAdminId._id.toString() !== req.user._id.toString()) &&
+        req.user.role !== 'admin') {
+      return res.status(403).json({
+        success: false,
+        message: 'Not authorized to view this ticket'
+      });
+    }
+
+    res.json({
+      success: true,
+      ticket
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching ticket details',
+      error: error.message
+    });
+  }
+};
+
+// @desc    Update ticket status
+// @route   PUT /api/support/tickets/:ticketId/status
+// @access  Private (Admin)
+exports.updateTicketStatus = async (req, res) => {
+  try {
+    const { ticketId } = req.params;
+    const { status } = req.body;
+
+    if (!['open', 'assigned', 'closed'].includes(status)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid status. Must be: open, assigned, or closed'
+      });
+    }
+
+    const ticket = await SupportTicket.findById(ticketId);
+
+    if (!ticket) {
+      return res.status(404).json({
+        success: false,
+        message: 'Support ticket not found'
+      });
+    }
+
+    // Only assigned admin or other admin can update status
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({
+        success: false,
+        message: 'Only admins can update ticket status'
+      });
+    }
+
+    // If changing to 'assigned', set the admin if not already assigned
+    if (status === 'assigned' && !ticket.assignedAdminId) {
+      ticket.assignedAdminId = req.user._id;
+    }
+
+    ticket.status = status;
+    await ticket.save();
+
+    const populatedTicket = await SupportTicket.findById(ticket._id)
+      .populate('userId', 'name profilePic email')
+      .populate('assignedAdminId', 'name profilePic email');
+
+    res.json({
+      success: true,
+      ticket: populatedTicket
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Error updating ticket status',
       error: error.message
     });
   }

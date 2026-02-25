@@ -9,6 +9,7 @@ import useMessageStore from '../store/messageStore';
 import { messageAPI, supportAPI } from '../utils/api';
 import socket, { connectSocket } from '../utils/socket';
 import toast from 'react-hot-toast';
+import { debugSupport } from '../utils/debugSupport';
 
 const Layout = () => {
   const location = useLocation();
@@ -22,6 +23,7 @@ const Layout = () => {
   } = useMessageStore();
   const notificationSoundRef = useRef(null);
   const [showChatModal, setShowChatModal] = useState(false);
+  const [supportAlerts, setSupportAlerts] = useState([]);
 
   const handleContactSupport = () => {
     if (!isAuthenticated) {
@@ -48,9 +50,47 @@ const Layout = () => {
       return;
     }
 
-    console.log('[Layout] Connecting socket for user:', user._id, 'Role:', user.role);
     connectSocket(user._id);
 
+    // Admin listener for support requests
+    if (user?.role === 'admin') {
+      const handleSupportRequest = (data) => {
+        console.log('[Layout] Admin received support request:', data);
+        debugSupport.socket('Admin received support request', { 
+          userName: data?.user?.name,
+          ticketId: data?.ticketId,
+          lastMessage: data?.lastMessage
+        });
+        
+        setSupportAlerts((prev) => [...prev, data]);
+        incrementSupportCount();
+        
+        // Show toast
+        toast.success(`${data?.user?.name} needs help!`, {
+          duration: 5000,
+          icon: '🔔',
+        });
+
+        // Play sound
+        if (notificationSoundRef.current) {
+          notificationSoundRef.current.play().catch(() => {});
+        }
+
+        // Browser notification
+        if ('Notification' in window && Notification.permission === 'granted') {
+          new Notification('Support Request', {
+            body: `${data?.user?.name} is requesting support`,
+            icon: data?.user?.profilePic || '/favicon.ico',
+            tag: 'support-request'
+          });
+        }
+      };
+
+      socket.on('support_request', handleSupportRequest);
+      return () => socket.off('support_request', handleSupportRequest);
+    }
+
+    // User listener for regular messages
     const handleReceiveMessage = (data) => {
       if (!location.pathname.startsWith('/messages')) {
         incrementUnread();
@@ -84,7 +124,7 @@ const Layout = () => {
     return () => {
       socket.off('receive_message', handleReceiveMessage);
     };
-  }, [isAuthenticated, user?._id, location.pathname, incrementUnread, reset]);
+  }, [isAuthenticated, user?._id, user?.role, location.pathname, incrementUnread, reset, incrementSupportCount]);
 
   useEffect(() => {
     if (!isAuthenticated || !user?._id) return;
@@ -105,67 +145,24 @@ const Layout = () => {
   useEffect(() => {
     if (!isAuthenticated || user?.role !== 'admin') return;
 
-    console.log('[Layout] 👨‍💼 Admin detected, setting up support request listener');
-
     const loadSupportCount = async () => {
       try {
         const response = await supportAPI.getOpenTickets();
         const tickets = response.data.tickets || [];
-        console.log('[Layout] 📊 Loaded support count:', tickets.length);
         setSupportCount(tickets.length);
-      } catch (error) {
-        console.error('[Layout] ❌ Failed to load support count:', error);
+      } catch {
+        // Ignore support count failures
       }
     };
 
     loadSupportCount();
 
-    const handleSupportRequest = (data) => {
-      console.log('[Layout] 🔔 Received support_request event:', data);
+    const handleSupportRequest = () => {
       incrementSupportCount();
-      
-      // Show toast notification
-      toast.success(`New support request from ${data?.user?.name || 'User'}`, {
-        duration: 5000,
-        icon: '🔔',
-      });
-
-      // Play notification sound
-      if (notificationSoundRef.current) {
-        notificationSoundRef.current.play().catch(() => {});
-      }
-
-      // Browser notification
-      if ('Notification' in window && Notification.permission === 'granted') {
-        const notification = new Notification('New Support Request', {
-          body: `${data?.user?.name || 'A user'} needs assistance`,
-          icon: data?.user?.profilePic || '/favicon.ico',
-          badge: '/favicon.ico',
-          tag: 'support-request'
-        });
-
-        notification.onclick = () => {
-          window.focus();
-          notification.close();
-        };
-
-        setTimeout(() => notification.close(), 5000);
-      }
     };
 
-    // Make sure socket is connected before listening
-    if (!socket.connected) {
-      console.log('[Layout] ⏳ Socket not connected yet, connecting...');
-      socket.connect();
-    }
-
-    console.log('[Layout] 👂 Adding support_request listener');
     socket.on('support_request', handleSupportRequest);
-    
-    return () => {
-      console.log('[Layout] 🗑️ Removing support_request listener');
-      socket.off('support_request', handleSupportRequest);
-    };
+    return () => socket.off('support_request', handleSupportRequest);
   }, [isAuthenticated, user?.role, setSupportCount, incrementSupportCount]);
 
   return (
@@ -176,24 +173,38 @@ const Layout = () => {
       </main>
       <Footer />
       
-      {/* Floating Support Chat Button - Web/Desktop/Mobile Browser Only (Not for Phone App) */}
-      {typeof window !== 'undefined' && isAuthenticated && user?.role !== 'admin' && (
+      {/* Floating Support Chat Button - Users & Admins */}
+      {typeof window !== 'undefined' && isAuthenticated && (
         <button
-          onClick={handleContactSupport}
+          onClick={() => setShowChatModal(true)}
           className="fixed bottom-8 right-8 z-40 w-14 h-14 bg-gradient-to-r from-primary-600 to-primary-700 text-white rounded-full shadow-lg hover:shadow-xl hover:scale-110 transition-all duration-300 flex items-center justify-center group"
-          title="Contact Support"
-          aria-label="Contact Support"
+          title={user?.role === 'admin' ? 'Support Center' : 'Contact Support'}
+          aria-label="Support"
         >
           <FiMessageCircle size={24} className="group-hover:animate-pulse" />
+          {user?.role === 'admin' && incrementSupportCount && (
+            <span className="absolute -top-1 -right-1 w-5 h-5 bg-yellow-500 text-white text-xs font-bold rounded-full flex items-center justify-center">
+              {supportAlerts.length > 0 ? supportAlerts.length : ''}
+            </span>
+          )}
           <span className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-white animate-pulse"></span>
         </button>
       )}
 
-      {/* Support Chat Modal */}
+      {/* Support Chat Modal - For both users and admins */}
       {showChatModal && (
         <SupportChatModal
           userId={user?._id}
-          onClose={() => setShowChatModal(false)}
+          userRole={user?.role}
+          userName={user?.name}
+          userProfilePic={user?.profilePic}
+          supportAlert={supportAlerts[supportAlerts.length - 1]} // Pass latest alert to admin
+          onClose={() => {
+            setShowChatModal(false);
+            if (user?.role === 'admin' && supportAlerts.length > 0) {
+              setSupportAlerts((prev) => prev.slice(1)); // Remove the current alert
+            }
+          }}
         />
       )}
     </div>
