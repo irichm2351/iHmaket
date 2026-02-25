@@ -6,7 +6,7 @@ import Footer from './Footer';
 import SupportChatModal from './SupportChatModal';
 import useAuthStore from '../store/authStore';
 import useMessageStore from '../store/messageStore';
-import { messageAPI, userAPI } from '../utils/api';
+import { messageAPI } from '../utils/api';
 import socket, { connectSocket } from '../utils/socket';
 import toast from 'react-hot-toast';
 
@@ -16,28 +16,14 @@ const Layout = () => {
   const { setConversations, incrementUnread, reset } = useMessageStore();
   const notificationSoundRef = useRef(null);
   const [showChatModal, setShowChatModal] = useState(false);
-  const [supportAdmin, setSupportAdmin] = useState(null);
 
-  const handleContactSupport = async () => {
+  const handleContactSupport = () => {
     if (!isAuthenticated) {
       toast.error('Please login to contact support');
       return;
     }
 
-    try {
-      const response = await userAPI.getSupportAdmin();
-      const admin = response.data.admin;
-
-      if (!admin) {
-        toast.error('No support admin available at the moment');
-        return;
-      }
-
-      setSupportAdmin(admin);
-      setShowChatModal(true);
-    } catch (error) {
-      toast.error(error.response?.data?.message || 'Failed to contact support');
-    }
+    setShowChatModal(true);
   };
 
   useEffect(() => {
@@ -131,9 +117,8 @@ const Layout = () => {
       )}
 
       {/* Support Chat Modal */}
-      {showChatModal && supportAdmin && (
+      {showChatModal && (
         <SupportChatModal
-          admin={supportAdmin}
           userId={user?._id}
           onClose={() => setShowChatModal(false)}
         />

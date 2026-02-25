@@ -1,25 +1,62 @@
 import { useEffect, useRef, useState } from 'react';
 import { FiX, FiSend } from 'react-icons/fi';
-import { messageAPI } from '../utils/api';
+import { messageAPI, supportAPI } from '../utils/api';
 import socket from '../utils/socket';
 import toast from 'react-hot-toast';
-import Loader from './Loader';
 
-const SupportChatModal = ({ admin, onClose, userId }) => {
-  const [messages, setMessages] = useState([]);
+const SupportChatModal = ({ onClose, userId }) => {
+  const [messages, setMessages] = useState(() => ([
+    {
+      _id: 'system-1',
+      text: 'How may I help you?',
+      system: true,
+      createdAt: new Date()
+    }
+  ]));
   const [messageText, setMessageText] = useState('');
-  const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
+  const [assignedAdmin, setAssignedAdmin] = useState(null);
+  const [ticketId, setTicketId] = useState(null);
   const messagesEndRef = useRef(null);
   const socketRef = useRef(null);
 
   useEffect(() => {
-    fetchMessages();
+    socketRef.current = socket;
+
+    const handleSupportAssigned = (data) => {
+      if (!data?.userId || data.userId.toString() !== userId?.toString()) {
+        return;
+      }
+
+      setAssignedAdmin(data.admin);
+      if (data.ticketId) {
+        setTicketId(data.ticketId);
+      }
+
+      setMessages((prev) => [
+        ...prev,
+        {
+          _id: `system-${Date.now()}`,
+          text: `Support Agent: ${data.admin?.name} joined the chat`,
+          system: true,
+          createdAt: new Date()
+        }
+      ]);
+    };
+
+    socketRef.current.on('support_assigned', handleSupportAssigned);
+    return () => {
+      socketRef.current?.off('support_assigned', handleSupportAssigned);
+    };
+  }, [userId]);
+
+  useEffect(() => {
+    if (!assignedAdmin?._id) return;
     socketRef.current = socket;
 
     const handleReceiveMessage = (data) => {
       const senderId = typeof data.senderId === 'string' ? data.senderId : data.senderId?._id;
-      if (senderId === admin._id) {
+      if (senderId === assignedAdmin._id) {
         setMessages((prev) => {
           const exists = prev.some((m) => m._id === data._id);
           return exists ? prev : [...prev, data];
@@ -31,23 +68,11 @@ const SupportChatModal = ({ admin, onClose, userId }) => {
     return () => {
       socketRef.current?.off('receive_message', handleReceiveMessage);
     };
-  }, [admin._id]);
+  }, [assignedAdmin?._id]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
-
-  const fetchMessages = async () => {
-    setLoading(true);
-    try {
-      const response = await messageAPI.getMessages(admin._id, { limit: 50 });
-      setMessages(response.data.messages || []);
-    } catch (error) {
-      console.error('Error fetching messages:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleSendMessage = async (e) => {
     e.preventDefault();
@@ -57,19 +82,41 @@ const SupportChatModal = ({ admin, onClose, userId }) => {
     setMessageText('');
     setSending(true);
 
-    try {
-      const response = await messageAPI.sendMessage({
-        receiverId: admin._id,
-        text: textToSend
-      });
+    const localMessage = {
+      _id: `local-${Date.now()}`,
+      text: textToSend,
+      senderId: userId,
+      createdAt: new Date()
+    };
 
-      const newMessage = response.data.message;
-      setMessages((prev) => {
-        const exists = prev.some((m) => m._id === newMessage._id);
-        return exists ? prev : [...prev, newMessage];
-      });
+    setMessages((prev) => [...prev, localMessage]);
+
+    try {
+      if (assignedAdmin?._id) {
+        const response = await messageAPI.sendMessage({
+          receiverId: assignedAdmin._id,
+          text: textToSend
+        });
+
+        const newMessage = response.data.message;
+        setMessages((prev) => {
+          const filtered = prev.filter((m) => m._id !== localMessage._id);
+          const exists = filtered.some((m) => m._id === newMessage._id);
+          return exists ? filtered : [...filtered, newMessage];
+        });
+      } else {
+        const response = await supportAPI.createSupportMessage({
+          text: textToSend,
+          ticketId
+        });
+
+        if (response.data?.ticket?._id) {
+          setTicketId(response.data.ticket._id);
+        }
+      }
     } catch (error) {
       toast.error(error.response?.data?.message || 'Failed to send message');
+      setMessages((prev) => prev.filter((m) => m._id !== localMessage._id));
       setMessageText(textToSend);
     } finally {
       setSending(false);
@@ -85,7 +132,12 @@ const SupportChatModal = ({ admin, onClose, userId }) => {
       <div className="relative bg-white rounded-lg shadow-2xl w-full md:w-64 h-80 md:h-80 flex flex-col z-50">
         {/* Header */}
         <div className="bg-gradient-to-r from-primary-600 to-primary-700 text-white p-4 rounded-t-lg flex items-center justify-between">
-          <p className="font-semibold">Support Team</p>
+          <div>
+            <p className="font-semibold">Support Team</p>
+            {assignedAdmin?.name && (
+              <p className="text-xs text-primary-100">{assignedAdmin.name}</p>
+            )}
+          </div>
           <button
             onClick={onClose}
             className="p-1 hover:bg-primary-600 rounded-full transition"
@@ -96,12 +148,16 @@ const SupportChatModal = ({ admin, onClose, userId }) => {
 
         {/* Messages Area */}
         <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-gray-50">
-          {loading ? (
-            <div className="flex items-center justify-center h-full">
-              <Loader size="md" />
-            </div>
-          ) : messages.length > 0 ? (
+          {messages.length > 0 ? (
             messages.map((message) => {
+              if (message.system) {
+                return (
+                  <div key={message._id} className="text-center text-xs text-gray-500">
+                    {message.text}
+                  </div>
+                );
+              }
+
               const senderId = typeof message.senderId === 'string' ? message.senderId : message.senderId?._id;
               const isMine = senderId === userId;
               return (

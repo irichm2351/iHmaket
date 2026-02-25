@@ -1,5 +1,6 @@
 const Message = require('../models/Message');
 const User = require('../models/User');
+const SupportTicket = require('../models/SupportTicket');
 
 // @desc    Send a message
 // @route   POST /api/messages
@@ -28,9 +29,36 @@ exports.sendMessage = async (req, res) => {
 
     await message.populate('senderId receiverId', 'name profilePic');
 
-    // Emit socket event to the receiver
     const io = req.app.get('io');
     const onlineUsers = req.app.get('onlineUsers');
+
+    if (req.user.role === 'admin') {
+      const openTicket = await SupportTicket.findOne({
+        userId: receiverId,
+        status: 'open'
+      });
+
+      if (openTicket) {
+        openTicket.status = 'assigned';
+        openTicket.assignedAdminId = req.user._id;
+        await openTicket.save();
+
+        const userSocketId = onlineUsers.get(receiverId.toString());
+        if (userSocketId) {
+          io.to(userSocketId).emit('support_assigned', {
+            ticketId: openTicket._id,
+            userId: receiverId,
+            admin: {
+              _id: req.user._id,
+              name: req.user.name,
+              profilePic: req.user.profilePic
+            }
+          });
+        }
+      }
+    }
+
+    // Emit socket event to the receiver
     const recipientSocketId = onlineUsers.get(receiverId.toString());
     
     if (recipientSocketId) {

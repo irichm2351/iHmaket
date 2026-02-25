@@ -90,6 +90,13 @@ export const userAPI = {
   getSupportAdmin: () => api.get('/users/support/admin'),
 };
 
+// Support API
+export const supportAPI = {
+  createSupportMessage: (data) => api.post('/support/messages', data),
+  getOpenTickets: () => api.get('/support/tickets/open'),
+  claimTicket: (ticketId) => api.post(`/support/tickets/${ticketId}/claim`)
+};
+
 // Service API
 export const serviceAPI = {
   getServices: (params) => api.get('/services', { params }),

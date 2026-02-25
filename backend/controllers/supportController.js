@@ -1,0 +1,208 @@
+const SupportTicket = require('../models/SupportTicket');
+const User = require('../models/User');
+const Message = require('../models/Message');
+
+// @desc    Create support ticket message from user
+// @route   POST /api/support/messages
+// @access  Private
+exports.createSupportMessage = async (req, res) => {
+  try {
+    const { text } = req.body;
+
+    if (!text || !text.trim()) {
+      return res.status(400).json({
+        success: false,
+        message: 'Message text is required'
+      });
+    }
+
+    const trimmedText = text.trim();
+
+    let ticket = await SupportTicket.findOne({
+      userId: req.user._id,
+      status: { $in: ['open', 'assigned'] }
+    }).sort({ createdAt: -1 });
+
+    if (ticket && ticket.assignedAdminId) {
+      const conversationId = Message.generateConversationId(req.user._id, ticket.assignedAdminId);
+      const message = await Message.create({
+        conversationId,
+        senderId: req.user._id,
+        receiverId: ticket.assignedAdminId,
+        text: trimmedText
+      });
+
+      await message.populate('senderId receiverId', 'name profilePic');
+
+      const io = req.app.get('io');
+      const onlineUsers = req.app.get('onlineUsers');
+      const recipientSocketId = onlineUsers.get(ticket.assignedAdminId.toString());
+
+      if (recipientSocketId) {
+        io.to(recipientSocketId).emit('receive_message', {
+          senderId: message.senderId,
+          receiverId: message.receiverId,
+          text: message.text,
+          _id: message._id,
+          createdAt: message.createdAt
+        });
+        io.to(recipientSocketId).emit('new-message', {
+          senderId: message.senderId._id,
+          senderName: message.senderId.name,
+          text: message.text
+        });
+      }
+
+      ticket.lastMessage = trimmedText;
+      ticket.lastMessageAt = new Date();
+      await ticket.save();
+
+      return res.status(201).json({
+        success: true,
+        ticket,
+        message,
+        assignedAdminId: ticket.assignedAdminId
+      });
+    }
+
+    if (!ticket) {
+      ticket = await SupportTicket.create({
+        userId: req.user._id,
+        status: 'open',
+        lastMessage: trimmedText,
+        lastMessageAt: new Date()
+      });
+    } else {
+      ticket.lastMessage = trimmedText;
+      ticket.lastMessageAt = new Date();
+      await ticket.save();
+    }
+
+    const admins = await User.find({ role: 'admin', isActive: true }).select('name profilePic');
+
+    const io = req.app.get('io');
+    const onlineUsers = req.app.get('onlineUsers');
+
+    admins.forEach((admin) => {
+      const adminSocketId = onlineUsers.get(admin._id.toString());
+      if (adminSocketId) {
+        io.to(adminSocketId).emit('support_request', {
+          ticketId: ticket._id,
+          user: {
+            _id: req.user._id,
+            name: req.user.name,
+            profilePic: req.user.profilePic
+          },
+          lastMessage: trimmedText,
+          createdAt: ticket.createdAt
+        });
+      }
+    });
+
+    return res.status(201).json({
+      success: true,
+      ticket
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Error creating support message',
+      error: error.message
+    });
+  }
+};
+
+// @desc    Get open support tickets (admin only)
+// @route   GET /api/support/tickets/open
+// @access  Private (Admin)
+exports.getOpenTickets = async (req, res) => {
+  try {
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({
+        success: false,
+        message: 'Admin access required'
+      });
+    }
+
+    const tickets = await SupportTicket.find({ status: 'open' })
+      .populate('userId', 'name profilePic email')
+      .sort({ updatedAt: -1 });
+
+    res.json({
+      success: true,
+      tickets
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching support tickets',
+      error: error.message
+    });
+  }
+};
+
+// @desc    Claim a support ticket (admin only)
+// @route   POST /api/support/tickets/:ticketId/claim
+// @access  Private (Admin)
+exports.claimTicket = async (req, res) => {
+  try {
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({
+        success: false,
+        message: 'Admin access required'
+      });
+    }
+
+    const { ticketId } = req.params;
+
+    const ticket = await SupportTicket.findById(ticketId);
+
+    if (!ticket) {
+      return res.status(404).json({
+        success: false,
+        message: 'Support ticket not found'
+      });
+    }
+
+    if (ticket.status !== 'open') {
+      return res.status(409).json({
+        success: false,
+        message: 'Support ticket already assigned'
+      });
+    }
+
+    ticket.status = 'assigned';
+    ticket.assignedAdminId = req.user._id;
+    await ticket.save();
+
+    const io = req.app.get('io');
+    const onlineUsers = req.app.get('onlineUsers');
+    const userSocketId = onlineUsers.get(ticket.userId.toString());
+
+    if (userSocketId) {
+      io.to(userSocketId).emit('support_assigned', {
+        ticketId: ticket._id,
+        userId: ticket.userId,
+        admin: {
+          _id: req.user._id,
+          name: req.user.name,
+          profilePic: req.user.profilePic
+        }
+      });
+    }
+
+    const populatedTicket = await SupportTicket.findById(ticket._id)
+      .populate('userId', 'name profilePic email');
+
+    res.json({
+      success: true,
+      ticket: populatedTicket
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Error claiming support ticket',
+      error: error.message
+    });
+  }
+};

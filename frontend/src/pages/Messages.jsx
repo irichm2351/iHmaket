@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { format, formatDistanceToNow } from 'date-fns';
 import { FiSearch, FiSend, FiUser } from 'react-icons/fi';
-import { messageAPI, userAPI } from '../utils/api';
+import { messageAPI, userAPI, supportAPI } from '../utils/api';
 import useAuthStore from '../store/authStore';
 import useMessageStore from '../store/messageStore';
 import socket, { connectSocket } from '../utils/socket';
@@ -22,6 +22,8 @@ const Messages = () => {
   const [sending, setSending] = useState(false);
   const [search, setSearch] = useState('');
   const [typing, setTyping] = useState(false);
+  const [supportRequests, setSupportRequests] = useState([]);
+  const [loadingSupport, setLoadingSupport] = useState(false);
 
   const socketRef = useRef(null);
   const messagesEndRef = useRef(null);
@@ -40,6 +42,24 @@ const Messages = () => {
     // Create notification sound
     notificationSoundRef.current = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBSuBzvLZiTYIGWe77eWeTRAMUKfj8LZjGwU4kte0');
   }, []);
+
+  useEffect(() => {
+    if (!isAuthenticated || user?.role !== 'admin') return;
+
+    const loadSupportRequests = async () => {
+      setLoadingSupport(true);
+      try {
+        const response = await supportAPI.getOpenTickets();
+        setSupportRequests(response.data.tickets || []);
+      } catch {
+        // Ignore support request fetch failures
+      } finally {
+        setLoadingSupport(false);
+      }
+    };
+
+    loadSupportRequests();
+  }, [isAuthenticated, user?.role]);
 
 
 
@@ -145,6 +165,34 @@ const Messages = () => {
       // socketRef.current = null;
     };
   }, [isAuthenticated, user?._id]);
+
+  useEffect(() => {
+    if (!isAuthenticated || user?.role !== 'admin') return;
+
+    const handleSupportRequest = (data) => {
+      if (!data?.ticketId) return;
+
+      setSupportRequests((prev) => {
+        const exists = prev.some((ticket) => ticket._id?.toString() === data.ticketId.toString());
+        if (exists) return prev;
+
+        return [
+          {
+            _id: data.ticketId,
+            userId: data.user,
+            lastMessage: data.lastMessage,
+            lastMessageAt: data.createdAt
+          },
+          ...prev
+        ];
+      });
+
+      toast.success('New support request');
+    };
+
+    socket.on('support_request', handleSupportRequest);
+    return () => socket.off('support_request', handleSupportRequest);
+  }, [isAuthenticated, user?.role]);
 
   useEffect(() => {
     if (!isAuthenticated) return;
@@ -287,6 +335,35 @@ const Messages = () => {
     });
   };
 
+  const handleClaimSupport = async (ticketId) => {
+    try {
+      const response = await supportAPI.claimTicket(ticketId);
+      const ticket = response.data.ticket;
+      const supportUser = ticket?.userId;
+
+      if (!supportUser?._id) return;
+
+      const newConversation = {
+        user: supportUser,
+        lastMessage: ticket.lastMessage
+          ? { text: ticket.lastMessage, createdAt: ticket.lastMessageAt }
+          : null,
+        unreadCount: 0
+      };
+
+      setConversations((prev) => {
+        const exists = prev.some((c) => c.user?._id === supportUser._id);
+        if (exists) return prev;
+        return [newConversation, ...prev];
+      });
+
+      setSelectedConversation(newConversation);
+      setSupportRequests((prev) => prev.filter((ticketItem) => ticketItem._id !== ticketId));
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Failed to claim support request');
+    }
+  };
+
   const filteredConversations = useMemo(() => {
     if (!search.trim()) return conversations;
     return conversations.filter((c) =>
@@ -313,6 +390,40 @@ const Messages = () => {
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-xl font-bold">Messages</h2>
           </div>
+
+          {user?.role === 'admin' && (
+            <div className="mb-4 border border-yellow-200 bg-yellow-50 rounded-lg p-3">
+              <div className="flex items-center justify-between mb-2">
+                <p className="font-semibold text-sm">Support Requests</p>
+                {loadingSupport && (
+                  <span className="text-xs text-gray-500">Loading...</span>
+                )}
+              </div>
+              {supportRequests.length === 0 ? (
+                <p className="text-xs text-gray-500">No open requests</p>
+              ) : (
+                <div className="space-y-2">
+                  {supportRequests.map((ticket) => {
+                    const ticketUser = ticket.userId || ticket.user;
+                    return (
+                      <button
+                        key={ticket._id}
+                        onClick={() => handleClaimSupport(ticket._id)}
+                        className="w-full text-left text-sm px-3 py-2 bg-white border border-yellow-200 rounded-lg hover:bg-yellow-100 transition"
+                      >
+                        <p className="font-medium truncate">
+                          {ticketUser?.name || 'User'}
+                        </p>
+                        <p className="text-xs text-gray-500 truncate">
+                          {ticket.lastMessage || 'New support request'}
+                        </p>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          )}
 
           <div className="relative mb-4">
             <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
