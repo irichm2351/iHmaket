@@ -93,8 +93,10 @@ export const userAPI = {
 // Support API
 export const supportAPI = {
   createSupportMessage: (data) => api.post('/support/messages', data),
+  getSupportMessages: (ticketId) => api.get(`/support/messages/${ticketId}`),
+  sendSupportMessage: (ticketId, data) => api.post(`/support/tickets/${ticketId}/message`, data),
+  acceptSupportRequest: (ticketId, data) => api.post(`/support/tickets/${ticketId}/accept`, data),
   getOpenTickets: () => api.get('/support/tickets/open'),
-  claimTicket: (ticketId) => api.post(`/support/tickets/${ticketId}/claim`),
   getTicketDetails: (ticketId) => api.get(`/support/tickets/${ticketId}`),
   updateTicketStatus: (ticketId, status) => api.put(`/support/tickets/${ticketId}/status`, { status })
 };

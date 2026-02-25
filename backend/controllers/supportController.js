@@ -1,6 +1,6 @@
 const SupportTicket = require('../models/SupportTicket');
+const SupportMessage = require('../models/SupportMessage');
 const User = require('../models/User');
-const Message = require('../models/Message');
 
 // @desc    Create support ticket message from user
 // @route   POST /api/support/messages
@@ -18,52 +18,11 @@ exports.createSupportMessage = async (req, res) => {
 
     const trimmedText = text.trim();
 
+    // Find or create support ticket
     let ticket = await SupportTicket.findOne({
       userId: req.user._id,
       status: { $in: ['open', 'assigned'] }
     }).sort({ createdAt: -1 });
-
-    if (ticket && ticket.assignedAdminId) {
-      const conversationId = Message.generateConversationId(req.user._id, ticket.assignedAdminId);
-      const message = await Message.create({
-        conversationId,
-        senderId: req.user._id,
-        receiverId: ticket.assignedAdminId,
-        text: trimmedText
-      });
-
-      await message.populate('senderId receiverId', 'name profilePic');
-
-      const io = req.app.get('io');
-      const onlineUsers = req.app.get('onlineUsers');
-      const recipientSocketId = onlineUsers.get(ticket.assignedAdminId.toString());
-
-      if (recipientSocketId) {
-        io.to(recipientSocketId).emit('receive_message', {
-          senderId: message.senderId,
-          receiverId: message.receiverId,
-          text: message.text,
-          _id: message._id,
-          createdAt: message.createdAt
-        });
-        io.to(recipientSocketId).emit('new-message', {
-          senderId: message.senderId._id,
-          senderName: message.senderId.name,
-          text: message.text
-        });
-      }
-
-      ticket.lastMessage = trimmedText;
-      ticket.lastMessageAt = new Date();
-      await ticket.save();
-
-      return res.status(201).json({
-        success: true,
-        ticket,
-        message,
-        assignedAdminId: ticket.assignedAdminId
-      });
-    }
 
     if (!ticket) {
       ticket = await SupportTicket.create({
@@ -80,42 +39,75 @@ exports.createSupportMessage = async (req, res) => {
       console.log(`📝 Updated existing ticket: ${ticket._id}`);
     }
 
-    const admins = await User.find({ role: 'admin', isActive: true }).select('name profilePic');
-    console.log(`👥 Found ${admins.length} active admin(s):`, admins.map(a => a.name).join(', '));
+    // Determine who to send message to
+    let receiverId = ticket.assignedAdminId; // If assigned to admin, send to that admin
+    
+    if (!receiverId) {
+      // If no assigned admin, send to broadcast to all online admins
+      // For now, we'll store with null receiverId and broadcast
+      receiverId = null;
+    }
+
+    // Create support message
+    const message = await SupportMessage.create({
+      ticketId: ticket._id,
+      senderId: req.user._id,
+      senderRole: 'user',
+      receiverId: receiverId,
+      text: trimmedText
+    });
+
+    await message.populate('senderId', 'name profilePic');
 
     const io = req.app.get('io');
     const onlineUsers = req.app.get('onlineUsers');
-    console.log(`🌐 Total online users: ${onlineUsers.size}`);
-    console.log(`🔍 Online user IDs:`, Array.from(onlineUsers.keys()));
 
-    let notifiedCount = 0;
-    admins.forEach((admin) => {
-      const adminSocketId = onlineUsers.get(admin._id.toString());
-      console.log(`🔍 Admin ${admin.name} (${admin._id}): ${adminSocketId ? `✅ Online (${adminSocketId})` : '❌ Offline'}`);
-      
+    // If assigned to specific admin, send directly to that admin
+    if (ticket.assignedAdminId) {
+      const adminSocketId = onlineUsers.get(ticket.assignedAdminId.toString());
       if (adminSocketId) {
-        const eventData = {
-          ticketId: ticket._id,
-          user: {
-            _id: req.user._id,
-            name: req.user.name,
-            profilePic: req.user.profilePic
-          },
-          lastMessage: trimmedText,
-          createdAt: ticket.createdAt
-        };
-        
-        console.log(`📤 Emitting support_request to admin ${admin.name}:`, eventData);
-        io.to(adminSocketId).emit('support_request', eventData);
-        notifiedCount++;
+        io.to(adminSocketId).emit('support_message', {
+          _id: message._id,
+          ticketId: message.ticketId,
+          senderId: message.senderId._id,
+          senderName: message.senderId.name,
+          senderProfilePic: message.senderId.profilePic,
+          senderRole: message.senderRole,
+          text: message.text,
+          createdAt: message.createdAt
+        });
       }
-    });
+    } else {
+      // If not assigned, notify all online admins about the new message
+      const admins = await User.find({ role: 'admin', isActive: true }).select('_id name profilePic');
+      console.log(`👥 Found ${admins.length} active admin(s):`, admins.map(a => a.name).join(', '));
+      console.log(`🌐 Total online users: ${onlineUsers.size}`);
 
-    console.log(`✅ Notified ${notifiedCount} online admin(s) about support request from ${req.user.name}`);
+      let notifiedCount = 0;
+      admins.forEach((admin) => {
+        const adminSocketId = onlineUsers.get(admin._id.toString());
+        if (adminSocketId) {
+          // First send support_request notification so admin sees the alert
+          io.to(adminSocketId).emit('support_request', {
+            ticketId: ticket._id,
+            user: {
+              _id: req.user._id,
+              name: req.user.name,
+              profilePic: req.user.profilePic
+            },
+            lastMessage: trimmedText,
+            createdAt: ticket.createdAt
+          });
+          notifiedCount++;
+        }
+      });
+      console.log(`✅ Notified ${notifiedCount} online admin(s) about support request from ${req.user.name}`);
+    }
 
     return res.status(201).json({
       success: true,
-      ticket
+      ticket,
+      message
     });
   } catch (error) {
     res.status(500).json({
@@ -314,6 +306,223 @@ exports.updateTicketStatus = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Error updating ticket status',
+      error: error.message
+    });
+  }
+};
+
+// @desc    Get support messages for a ticket
+// @route   GET /api/support/messages/:ticketId
+// @access  Private
+exports.getSupportMessages = async (req, res) => {
+  try {
+    const { ticketId } = req.params;
+
+    const ticket = await SupportTicket.findById(ticketId);
+    if (!ticket) {
+      return res.status(404).json({
+        success: false,
+        message: 'Support ticket not found'
+      });
+    }
+
+    // User can only view their own tickets, admins can view any
+    if (ticket.userId.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
+      return res.status(403).json({
+        success: false,
+        message: 'Not authorized to view this ticket'
+      });
+    }
+
+    const messages = await SupportMessage.find({ ticketId })
+      .populate('senderId', 'name profilePic')
+      .sort({ createdAt: 1 });
+
+    res.json({
+      success: true,
+      messages
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching support messages',
+      error: error.message
+    });
+  }
+};
+
+// @desc    Admin accepts and responds to support request
+// @route   POST /api/support/tickets/:ticketId/accept
+// @access  Private (Admin)
+exports.acceptSupportRequest = async (req, res) => {
+  try {
+    const { ticketId } = req.params;
+    const { text } = req.body; // Optional reply message
+
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({
+        success: false,
+        message: 'Only admins can accept support requests'
+      });
+    }
+
+    const ticket = await SupportTicket.findById(ticketId);
+    if (!ticket) {
+      return res.status(404).json({
+        success: false,
+        message: 'Support ticket not found'
+      });
+    }
+
+    // Assign ticket to this admin
+    ticket.status = 'assigned';
+    ticket.assignedAdminId = req.user._id;
+    await ticket.save();
+
+    console.log(`✅ Admin ${req.user.name} accepted support request for user ${ticket.userId}`);
+
+    // If there's a reply message, create it
+    let message = null;
+    if (text && text.trim()) {
+      message = await SupportMessage.create({
+        ticketId: ticket._id,
+        senderId: req.user._id,
+        senderRole: 'admin',
+        receiverId: ticket.userId,
+        text: text.trim()
+      });
+      await message.populate('senderId', 'name profilePic');
+    }
+
+    const io = req.app.get('io');
+    const onlineUsers = req.app.get('onlineUsers');
+
+    // Notify the user that admin accepted
+    const userSocketId = onlineUsers.get(ticket.userId.toString());
+    if (userSocketId) {
+      io.to(userSocketId).emit('support_assigned', {
+        ticketId: ticket._id,
+        admin: {
+          _id: req.user._id,
+          name: req.user.name,
+          profilePic: req.user.profilePic
+        }
+      });
+
+      // If there's a message, also send that
+      if (message) {
+        io.to(userSocketId).emit('support_message', {
+          _id: message._id,
+          ticketId: message.ticketId,
+          senderId: message.senderId._id,
+          senderName: message.senderId.name,
+          senderProfilePic: message.senderId.profilePic,
+          senderRole: message.senderRole,
+          text: message.text,
+          createdAt: message.createdAt
+        });
+      }
+    }
+
+    const populatedTicket = await SupportTicket.findById(ticket._id)
+      .populate('userId', 'name profilePic')
+      .populate('assignedAdminId', 'name profilePic');
+
+    res.json({
+      success: true,
+      ticket: populatedTicket,
+      message
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Error accepting support request',
+      error: error.message
+    });
+  }
+};
+
+// @desc    Send support message (from admin or user)
+// @route   POST /api/support/tickets/:ticketId/message
+// @access  Private
+exports.sendSupportMessage = async (req, res) => {
+  try {
+    const { ticketId } = req.params;
+    const { text } = req.body;
+
+    if (!text || !text.trim()) {
+      return res.status(400).json({
+        success: false,
+        message: 'Message text is required'
+      });
+    }
+
+    const ticket = await SupportTicket.findById(ticketId);
+    if (!ticket) {
+      return res.status(404).json({
+        success: false,
+        message: 'Support ticket not found'
+      });
+    }
+
+    // Determine sender role and receiver
+    let senderRole = 'user';
+    let receiverId = ticket.assignedAdminId;
+
+    if (req.user.role === 'admin') {
+      senderRole = 'admin';
+      receiverId = ticket.userId;
+    } else {
+      // User can only send if they own the ticket
+      if (ticket.userId.toString() !== req.user._id.toString()) {
+        return res.status(403).json({
+          success: false,
+          message: 'Not authorized'
+        });
+      }
+    }
+
+    const message = await SupportMessage.create({
+      ticketId: ticket._id,
+      senderId: req.user._id,
+      senderRole,
+      receiverId,
+      text: text.trim()
+    });
+
+    await message.populate('senderId', 'name profilePic');
+
+    // Update ticket's last message
+    ticket.lastMessage = text.trim();
+    ticket.lastMessageAt = new Date();
+    await ticket.save();
+
+    // Send via socket to recipient
+    const io = req.app.get('io');
+    const onlineUsers = req.app.get('onlineUsers');
+    const recipientSocketId = onlineUsers.get(receiverId.toString());
+
+    if (recipientSocketId) {
+      io.to(recipientSocketId).emit('support_message', {
+        _id: message._id,
+        ticketId: message.ticketId,
+        senderId: message.senderId._id,
+        senderName: message.senderId.name,
+        senderProfilePic: message.senderId.profilePic,
+        senderRole: message.senderRole,
+        text: message.text,
+        createdAt: message.createdAt
+      });
+    }
+
+    res.json({
+      success: true,
+      message
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Error sending support message',
       error: error.message
     });
   }

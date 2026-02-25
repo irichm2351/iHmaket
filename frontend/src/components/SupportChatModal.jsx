@@ -1,272 +1,210 @@
 import { useEffect, useRef, useState } from 'react';
 import { FiX, FiSend } from 'react-icons/fi';
-import { messageAPI, supportAPI } from '../utils/api';
+import { supportAPI } from '../utils/api';
 import socket from '../utils/socket';
 import toast from 'react-hot-toast';
 import { debugSupport } from '../utils/debugSupport';
 
 const SupportChatModal = ({ onClose, userId, userRole, userName, userProfilePic, supportAlert }) => {
-  const [messages, setMessages] = useState(() => ([
-    {
-      _id: 'system-1',
-      text: userRole === 'admin' 
-        ? `User ${supportAlert?.user?.name} needs help` 
-        : 'How may I help you?',
-      system: true,
-      createdAt: new Date()
-    }
-  ]));
+  const [messages, setMessages] = useState([]);
   const [messageText, setMessageText] = useState('');
   const [sending, setSending] = useState(false);
+  const [ticketId, setTicketId] = useState(supportAlert?.ticketId || null);
+  const [ticketStatus, setTicketStatus] = useState(supportAlert ? 'open' : null);
+  const [supportingUser, setSupportingUser] = useState(supportAlert?.user || null);
   const [assignedAdmin, setAssignedAdmin] = useState(null);
-  const [ticketId, setTicketId] = useState(null);
-  const [ticketStatus, setTicketStatus] = useState('open');
-  const [supportingUser, setSupportingUser] = useState(supportAlert?.user || null); // For admin
+  const [systemMessage, setSystemMessage] = useState('');
   const messagesEndRef = useRef(null);
 
-  // For admins: Set the supporting user from the alert
+  // Set up system message based on role
+  useEffect(() => {
+    if (userRole === 'admin') {
+      if (supportAlert?.user) {
+        setSystemMessage(`Supporting: ${supportAlert.user.name}`);
+      }
+    } else {
+      setSystemMessage('Connecting to support team...');
+    }
+  }, [userRole, supportAlert]);
+
+  // For admin: Set supporting user info from alert
   useEffect(() => {
     if (userRole === 'admin' && supportAlert) {
       setSupportingUser(supportAlert.user);
       setTicketId(supportAlert.ticketId);
+      setTicketStatus('open');
     }
   }, [supportAlert, userRole]);
 
-  // Load message history for admin with supporting user
-  useEffect(() => {
-    if (userRole === 'admin' && supportingUser?._id) {
-      const loadMessageHistory = async () => {
-        try {
-          const response = await messageAPI.getConversation(supportingUser._id);
-          if (response.data?.messages) {
-            const systemMessage = messages[0]; // Keep initial system message
-            setMessages([systemMessage, ...response.data.messages]);
-          }
-        } catch (error) {
-          console.error('Failed to load message history:', error);
-        }
-      };
-      loadMessageHistory();
-    }
-  }, [userRole, supportingUser?._id]);
-
-  // Load ticket details for status tracking
-  useEffect(() => {
-    if (ticketId) {
-      const loadTicketStatus = async () => {
-        try {
-          const response = await supportAPI.getTicketDetails(ticketId);
-          if (response.data?.ticket?.status) {
-            setTicketStatus(response.data.ticket.status);
-          }
-        } catch (error) {
-          console.error('Failed to load ticket status:', error);
-        }
-      };
-      loadTicketStatus();
-    }
-  }, [ticketId]);
-
-  // When user opens chat, create a support ticket
+  // For user: Create support ticket on first load
   useEffect(() => {
     if (userRole !== 'admin' && !ticketId) {
       const createTicket = async () => {
         try {
           debugSupport.info('User creating support ticket', { userId });
           const response = await supportAPI.createSupportMessage({
-            text: 'User opened support chat',
-            ticketId: null
+            text: 'User opened support chat'
           });
+
           if (response.data?.ticket?._id) {
             setTicketId(response.data.ticket._id);
-            debugSupport.success('Support ticket created', { 
-              ticketId: response.data.ticket._id,
-              status: response.data.ticket.status
+            setTicketStatus(response.data.ticket.status);
+            setSystemMessage('Support request sent! Waiting for admin...');
+            debugSupport.success('Support ticket created', {
+              ticketId: response.data.ticket._id
             });
           }
         } catch (error) {
           debugSupport.error('Failed to create support ticket', {
-            errorMessage: error.message,
-            errorCode: error.response?.status
+            errorMessage: error.message
           });
-          console.error('Failed to create support ticket:', error);
+          toast.error('Failed to create support request');
         }
       };
+
       createTicket();
     }
   }, [userRole]);
 
-  // Socket listeners for users and admins
+  // Load support messages
   useEffect(() => {
-    // For users: Listen for admin assignment
-    if (userRole !== 'admin') {
-      const handleSupportAssigned = (data) => {
-        if (!data?.userId || data.userId.toString() !== userId?.toString()) {
-          return;
-        }
-
-        setAssignedAdmin(data.admin);
-        if (data.ticketId) {
-          setTicketId(data.ticketId);
-        }
-
-        setMessages((prev) => [
-          ...prev,
-          {
-            _id: `system-${Date.now()}`,
-            text: `Admin ${data.admin?.name} is now helping`,
-            system: true,
-            createdAt: new Date()
+    if (ticketId) {
+      const loadMessages = async () => {
+        try {
+          const response = await supportAPI.getSupportMessages(ticketId);
+          if (response.data?.messages) {
+            debugSupport.info('Loaded support messages', {
+              ticketId,
+              count: response.data.messages.length
+            });
+            setMessages(response.data.messages);
           }
-        ]);
-      };
-
-      socket.on('support_assigned', handleSupportAssigned);
-      return () => socket.off('support_assigned', handleSupportAssigned);
-    }
-
-    // For admins: Listen for messages from the user
-    if (userRole === 'admin' && supportingUser?._id) {
-      const handleReceiveMessage = (data) => {
-        const senderId = typeof data.senderId === 'string' ? data.senderId : data.senderId?._id;
-        if (senderId === supportingUser._id) {
-          setMessages((prev) => {
-            const exists = prev.some((m) => m._id === data._id);
-            return exists ? prev : [...prev, data];
-          });
+        } catch (error) {
+          debugSupport.error('Failed to load messages', { ticketId });
         }
       };
 
-      socket.on('receive_message', handleReceiveMessage);
-      return () => socket.off('receive_message', handleReceiveMessage);
+      loadMessages();
     }
-  }, [userId, userRole, supportingUser?._id]);
+  }, [ticketId]);
 
+  // Listen for incoming support messages
+  useEffect(() => {
+    const handleSupportMessage = (data) => {
+      // Only add if it's for this ticket
+      if (data.ticketId === ticketId) {
+        setMessages((prev) => {
+          const exists = prev.some((m) => m._id === data._id);
+          return exists ? prev : [...prev, {
+            _id: data._id,
+            text: data.text,
+            senderId: data.senderId,
+            senderName: data.senderName,
+            senderProfilePic: data.senderProfilePic,
+            senderRole: data.senderRole,
+            createdAt: data.createdAt
+          }];
+        });
+      }
+    };
+
+    const handleSupportAssigned = (data) => {
+      if (data.ticketId === ticketId) {
+        setAssignedAdmin(data.admin);
+        setTicketStatus('assigned');
+        setSystemMessage(`${data.admin.name} is helping you!`);
+        debugSupport.success('Admin assigned', { adminName: data.admin.name });
+      }
+    };
+
+    socket.on('support_message', handleSupportMessage);
+    socket.on('support_assigned', handleSupportAssigned);
+
+    return () => {
+      socket.off('support_message', handleSupportMessage);
+      socket.off('support_assigned', handleSupportAssigned);
+    };
+  }, [ticketId]);
+
+  // Auto-scroll to bottom
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
   const handleSendMessage = async (e) => {
     e.preventDefault();
-    if (!messageText.trim()) return;
+    if (!messageText.trim() || !ticketId) return;
 
     const textToSend = messageText.trim();
     setMessageText('');
     setSending(true);
 
-    const localMessage = {
-      _id: `local-${Date.now()}`,
-      text: textToSend,
-      senderId: userId,
-      createdAt: new Date()
-    };
-
-    debugSupport.info(`${userRole} sending message`, {
-      role: userRole,
-      receiverId: userRole === 'admin' ? supportingUser?._id : assignedAdmin?._id,
-      messagePreview: textToSend.substring(0, 50)
-    });
-
-    setMessages((prev) => [...prev, localMessage]);
-
     try {
-      if (userRole === 'admin' && supportingUser?._id) {
-        // Admin sending message to user
-        const response = await messageAPI.sendMessage({
-          receiverId: supportingUser._id,
+      debugSupport.info(`${userRole} sending message`, { ticketId });
+
+      if (userRole === 'admin') {
+        // Admin sending message
+        const response = await supportAPI.sendSupportMessage(ticketId, {
           text: textToSend
         });
 
-        const newMessage = response.data.message;
-        debugSupport.success('Admin message sent to user', { 
-          messageId: newMessage._id,
-          userId: supportingUser._id
-        });
-
-        setMessages((prev) => {
-          const filtered = prev.filter((m) => m._id !== localMessage._id);
-          const exists = filtered.some((m) => m._id === newMessage._id);
-          return exists ? filtered : [...filtered, newMessage];
-        });
-      } else if (assignedAdmin?._id) {
-        // User sending message to assigned admin
-        const response = await messageAPI.sendMessage({
-          receiverId: assignedAdmin._id,
-          text: textToSend
-        });
-
-        const newMessage = response.data.message;
-        debugSupport.success('User message sent to admin', { 
-          messageId: newMessage._id,
-          adminId: assignedAdmin._id
-        });
-
-        setMessages((prev) => {
-          const filtered = prev.filter((m) => m._id !== localMessage._id);
-          const exists = filtered.some((m) => m._id === newMessage._id);
-          return exists ? filtered : [...filtered, newMessage];
+        debugSupport.success('Admin message sent', {
+          messageId: response.data.message._id
         });
       } else {
-        // User starting support request
-        const response = await supportAPI.createSupportMessage({
-          text: textToSend,
-          ticketId
+        // User sending message
+        const response = await supportAPI.sendSupportMessage(ticketId, {
+          text: textToSend
         });
 
-        debugSupport.success('User support message sent', {
-          ticketId: response.data.ticket?._id,
-          messagePreview: textToSend.substring(0, 50)
+        debugSupport.success('User message sent', {
+          messageId: response.data.message._id
         });
-
-        if (response.data?.ticket?._id) {
-          setTicketId(response.data.ticket._id);
-        }
       }
     } catch (error) {
       debugSupport.error('Failed to send message', {
-        role: userRole,
-        errorMessage: error.message,
-        errorCode: error.response?.status
+        errorMessage: error.message
       });
-      toast.error(error.response?.data?.message || 'Failed to send message');
-      setMessages((prev) => prev.filter((m) => m._id !== localMessage._id));
+      toast.error('Failed to send message');
       setMessageText(textToSend);
     } finally {
       setSending(false);
     }
   };
 
-  const handleUpdateTicketStatus = async (newStatus) => {
+  // For admin: Accept the support request
+  const handleAcceptRequest = async () => {
     if (!ticketId) return;
 
-    debugSupport.info('Admin updating ticket status', {
-      ticketId,
-      oldStatus: ticketStatus,
-      newStatus
-    });
+    try {
+      debugSupport.info('Admin accepting support request', { ticketId });
+      const response = await supportAPI.acceptSupportRequest(ticketId, {
+        text: `Hi! I'm here to help. What do you need assistance with?`
+      });
+
+      setTicketStatus(response.data.ticket.status);
+      setSystemMessage('You accepted the request');
+      debugSupport.success('Request accepted', { ticketId });
+      toast.success('Support request accepted!');
+    } catch (error) {
+      debugSupport.error('Failed to accept request', {
+        errorMessage: error.message
+      });
+      toast.error('Failed to accept request');
+    }
+  };
+
+  // For admin: Close the ticket
+  const handleCloseTicket = async () => {
+    if (!ticketId) return;
 
     try {
-      const response = await supportAPI.updateTicketStatus(ticketId, newStatus);
-      if (response.data?.ticket?.status) {
-        setTicketStatus(response.data.ticket.status);
-        debugSupport.success('Ticket status updated', {
-          ticketId,
-          status: response.data.ticket.status
-        });
-        toast.success(`Ticket marked as ${newStatus}`);
-        
-        if (newStatus === 'closed') {
-          setTimeout(() => onClose(), 1000);
-        }
-      }
+      debugSupport.info('Admin closing ticket', { ticketId });
+      await supportAPI.updateTicketStatus(ticketId, 'closed');
+      toast.success('Ticket closed');
+      setTimeout(() => onClose(), 1000);
     } catch (error) {
-      debugSupport.error('Failed to update ticket status', {
-        ticketId,
-        newStatus,
-        errorMessage: error.message,
-        errorCode: error.response?.status
-      });
-      toast.error(error.response?.data?.message || 'Failed to update ticket status');
+      toast.error('Failed to close ticket');
     }
   };
 
@@ -276,64 +214,45 @@ const SupportChatModal = ({ onClose, userId, userRole, userName, userProfilePic,
       <div className="absolute inset-0 bg-black bg-opacity-20" onClick={onClose}></div>
 
       {/* Chat Modal */}
-      <div className="relative bg-white rounded-lg shadow-2xl w-full md:w-64 h-80 md:h-80 flex flex-col z-50">
+      <div className="relative bg-white rounded-lg shadow-2xl w-full md:w-96 h-96 flex flex-col z-50">
         {/* Header */}
         <div className="bg-gradient-to-r from-primary-600 to-primary-700 text-white p-4 rounded-t-lg flex items-center justify-between">
           <div className="flex-1">
             {userRole === 'admin' ? (
               <>
-                <p className="font-semibold">Supporting User</p>
-                <div className="flex items-center gap-2 mt-1">
-                  <p className="text-xs text-primary-100">{supportingUser?.name || 'User'}</p>
-                  <span className={`text-xs px-2 py-0.5 rounded-full font-semibold ${
-                    ticketStatus === 'open' ? 'bg-yellow-400 text-gray-900' :
-                    ticketStatus === 'assigned' ? 'bg-blue-400 text-white' :
-                    'bg-green-400 text-white'
-                  }`}>
-                    {ticketStatus}
-                  </span>
-                </div>
+                <p className="font-semibold text-sm">Supporting User</p>
+                <p className="text-xs text-primary-100">{supportingUser?.name || 'User'}</p>
               </>
             ) : (
               <>
-                <p className="font-semibold">Support Team</p>
-                {assignedAdmin?.name ? (
-                  <p className="text-xs text-primary-100">{assignedAdmin.name}</p>
-                ) : (
-                  <p className="text-xs text-primary-100 flex items-center gap-2">
-                    <span className="inline-flex w-2 h-2 rounded-full bg-yellow-300 animate-pulse"></span>
-                    Waiting for support...
-                  </p>
-                )}
+                <p className="font-semibold text-sm">Support Chat</p>
+                <p className="text-xs text-primary-100">
+                  {assignedAdmin ? assignedAdmin.name : 'Waiting for admin...'}
+                </p>
               </>
             )}
           </div>
-          <button
-            onClick={onClose}
-            className="p-1 hover:bg-primary-600 rounded-full transition"
-          >
+          <button onClick={onClose} className="p-1 hover:bg-primary-600 rounded-full transition">
             <FiX size={20} />
           </button>
         </div>
+
+        {/* System Message */}
+        {systemMessage && (
+          <div className="px-4 py-2 bg-blue-50 border-b border-blue-200 text-xs text-blue-700 text-center">
+            {systemMessage}
+          </div>
+        )}
 
         {/* Messages Area */}
         <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-gray-50">
           {messages.length > 0 ? (
             messages.map((message) => {
-              if (message.system) {
-                return (
-                  <div key={message._id} className="text-center text-xs text-gray-500">
-                    {message.text}
-                  </div>
-                );
-              }
-
-              const senderId = typeof message.senderId === 'string' ? message.senderId : message.senderId?._id;
-              const isMine = senderId === userId;
+              const isMine = message.senderId === userId;
               return (
                 <div key={message._id} className={`flex ${isMine ? 'justify-end' : 'justify-start'}`}>
                   <div
-                    className={`max-w-[75%] rounded-lg px-3 py-2 text-sm ${
+                    className={`max-w-xs rounded-lg px-4 py-2 text-sm ${
                       isMine
                         ? 'bg-primary-600 text-white'
                         : 'bg-white text-gray-900 border border-gray-200'
@@ -352,49 +271,64 @@ const SupportChatModal = ({ onClose, userId, userRole, userName, userProfilePic,
             })
           ) : (
             <div className="flex items-center justify-center h-full text-gray-500 text-sm">
-              <p>Start a conversation with our support team</p>
+              <p>Messages will appear here</p>
             </div>
           )}
           <div ref={messagesEndRef} />
         </div>
 
         {/* Input Area */}
-        <div className="border-t bg-white">
+        <div className="border-t bg-white rounded-b-lg">
           {/* Admin Actions */}
-          {userRole === 'admin' && ticketStatus !== 'closed' && (
-            <div className="px-4 py-2 border-b bg-gray-100 flex gap-2 text-xs">
-              {ticketStatus === 'open' && (
-                <button
-                  onClick={() => handleUpdateTicketStatus('assigned')}
-                  className="px-2 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 transition"
-                >
-                  Assign to Me
-                </button>
-              )}
-              {ticketStatus === 'assigned' && (
-                <button
-                  onClick={() => handleUpdateTicketStatus('closed')}
-                  className="px-2 py-1 bg-green-500 text-white rounded hover:bg-green-600 transition"
-                >
-                  Resolve
-                </button>
-              )}
+          {userRole === 'admin' && ticketStatus === 'open' && (
+            <div className="px-4 py-3 border-b bg-yellow-50 flex gap-2">
+              <button
+                onClick={handleAcceptRequest}
+                className="flex-1 px-3 py-2 bg-green-500 text-white text-sm font-semibold rounded hover:bg-green-600 transition"
+              >
+                Accept Request
+              </button>
             </div>
           )}
-          
+
+          {userRole === 'admin' && ticketStatus === 'assigned' && (
+            <div className="px-4 py-2 border-b bg-gray-100 flex gap-2">
+              <button
+                onClick={handleCloseTicket}
+                className="px-3 py-1 bg-gray-500 text-white text-xs rounded hover:bg-gray-600 transition"
+              >
+                Close Ticket
+              </button>
+            </div>
+          )}
+
+          {/* Message Input */}
           <form onSubmit={handleSendMessage} className="p-4">
             <div className="flex gap-2">
               <input
                 type="text"
                 value={messageText}
                 onChange={(e) => setMessageText(e.target.value)}
-                placeholder="Type your message..."
+                placeholder={
+                  userRole === 'admin' && ticketStatus === 'open'
+                    ? 'Accept request to reply...'
+                    : 'Type message...'
+                }
                 className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-600"
-                disabled={sending || ticketStatus === 'closed'}
+                disabled={
+                  sending ||
+                  (userRole === 'admin' && ticketStatus === 'open') ||
+                  ticketStatus === 'closed'
+                }
               />
               <button
                 type="submit"
-                disabled={sending || !messageText.trim() || ticketStatus === 'closed'}
+                disabled={
+                  sending ||
+                  !messageText.trim() ||
+                  (userRole === 'admin' && ticketStatus === 'open') ||
+                  ticketStatus === 'closed'
+                }
                 className="p-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition disabled:opacity-50"
               >
                 <FiSend size={20} />
