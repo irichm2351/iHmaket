@@ -13,7 +13,7 @@ exports.createSupportTicket = async (req, res) => {
       status: { $in: ['open', 'assigned'] }
     }).sort({ createdAt: -1 });
 
-    // If ticket already exists, return it (don't notify admins again)
+    // If ticket already exists, return it (notify only on first creation)
     if (ticket) {
       return res.status(200).json({
         success: true,
