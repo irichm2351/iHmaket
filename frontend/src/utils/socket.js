@@ -1,6 +1,14 @@
 import { io } from 'socket.io-client';
 
-const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || 'http://localhost:5000';
+const getSocketUrl = () => {
+  if (typeof window !== 'undefined' && window.location.hostname !== 'localhost') {
+    return 'https://ihmaket-backend.onrender.com';
+  }
+
+  return import.meta.env.VITE_SOCKET_URL || 'http://localhost:5000';
+};
+
+const SOCKET_URL = getSocketUrl();
 
 const socket = io(SOCKET_URL, {
   autoConnect: false,
