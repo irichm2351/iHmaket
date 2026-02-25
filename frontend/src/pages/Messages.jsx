@@ -173,18 +173,24 @@ const Messages = () => {
     if (!isAuthenticated || user?.role !== 'admin') return;
 
     const handleSupportRequest = (data) => {
+      console.log('[Messages] Received support_request event:', data);
       if (!data?.ticketId) return;
 
       setSupportRequests((prev) => {
         const exists = prev.some((ticket) => ticket._id?.toString() === data.ticketId.toString());
-        if (exists) return prev;
+        if (exists) {
+          console.log('[Messages] Ticket already exists in list');
+          return prev;
+        }
 
+        console.log('[Messages] Adding new ticket to list');
         return [
           {
             _id: data.ticketId,
             userId: data.user,
             lastMessage: data.lastMessage,
-            lastMessageAt: data.createdAt
+            lastMessageAt: data.createdAt,
+            status: data.status
           },
           ...prev
         ];

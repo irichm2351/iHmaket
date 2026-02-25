@@ -13,7 +13,7 @@ exports.createSupportTicket = async (req, res) => {
       status: { $in: ['open', 'assigned'] }
     }).sort({ createdAt: -1 });
 
-    // If ticket already exists, return it
+    // If ticket already exists, return it (don't notify admins again)
     if (ticket) {
       return res.status(200).json({
         success: true,
@@ -30,8 +30,14 @@ exports.createSupportTicket = async (req, res) => {
       lastMessageAt: new Date()
     });
 
+    // Populate the user field
+    await ticket.populate('userId', 'name profilePic email');
+
     // Get all active admins
-    const admins = await User.find({ role: 'admin', isActive: true }).select('name profilePic');
+    const admins = await User.find({ role: 'admin', isActive: true }).select('_id name profilePic');
+
+    console.log(`[Support Ticket] Created ticket ${ticket._id} for user ${req.user.name}`);
+    console.log(`[Support Ticket] Notifying ${admins.length} admin(s)`);
 
     // Notify all admins via socket
     const io = req.app.get('io');
@@ -39,17 +45,21 @@ exports.createSupportTicket = async (req, res) => {
 
     admins.forEach((admin) => {
       const adminSocketId = onlineUsers.get(admin._id.toString());
+      console.log(`[Support Ticket] Admin ${admin.name} online:`, !!adminSocketId);
+      
       if (adminSocketId) {
         io.to(adminSocketId).emit('support_request', {
           ticketId: ticket._id,
           user: {
-            _id: req.user._id,
-            name: req.user.name,
-            profilePic: req.user.profilePic
+            _id: ticket.userId._id,
+            name: ticket.userId.name,
+            profilePic: ticket.userId.profilePic
           },
-          lastMessage: 'User opened support chat',
-          createdAt: ticket.createdAt
+          lastMessage: ticket.lastMessage,
+          createdAt: ticket.createdAt,
+          status: ticket.status
         });
+        console.log(`[Support Ticket] Emitted support_request to admin ${admin.name}`);
       }
     });
 
@@ -58,6 +68,7 @@ exports.createSupportTicket = async (req, res) => {
       ticket
     });
   } catch (error) {
+    console.error('[Support Ticket] Error creating ticket:', error);
     res.status(500).json({
       success: false,
       message: 'Error creating support ticket',

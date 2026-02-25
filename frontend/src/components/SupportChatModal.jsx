@@ -25,12 +25,23 @@ const SupportChatModal = ({ onClose, userId }) => {
   useEffect(() => {
     const initializeSupportTicket = async () => {
       try {
+        console.log('[Support Chat] Creating support ticket...');
         const response = await supportAPI.createSupportTicket();
+        console.log('[Support Chat] Ticket response:', response.data);
+        
         if (response.data?.ticket?._id) {
           setTicketId(response.data.ticket._id);
+          console.log('[Support Chat] Ticket created:', response.data.ticket._id);
+          
+          if (response.data.alreadyExists) {
+            console.log('[Support Chat] Existing ticket found');
+          } else {
+            console.log('[Support Chat] New ticket created, admins notified');
+          }
         }
       } catch (error) {
-        console.error('Failed to create support ticket:', error);
+        console.error('[Support Chat] Failed to create support ticket:', error);
+        console.error('[Support Chat] Error details:', error.response?.data);
         // Don't show error to user, they can still send messages
       }
     };

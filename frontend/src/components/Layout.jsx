@@ -117,6 +117,7 @@ const Layout = () => {
     loadSupportCount();
 
     const handleSupportRequest = (data) => {
+      console.log('[Layout] Received support_request event:', data);
       incrementSupportCount();
       
       // Show toast notification
