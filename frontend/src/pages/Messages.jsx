@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import { format, formatDistanceToNow } from 'date-fns';
 import { FiSearch, FiSend, FiUser } from 'react-icons/fi';
 import { messageAPI, userAPI } from '../utils/api';
@@ -11,6 +11,7 @@ import toast from 'react-hot-toast';
 
 const Messages = () => {
   const { user, isAuthenticated } = useAuthStore();
+  const navigate = useNavigate();
   const {
     setConversations: setStoreConversations
   } = useMessageStore();
@@ -24,7 +25,6 @@ const Messages = () => {
   const [sending, setSending] = useState(false);
   const [search, setSearch] = useState('');
   const [typing, setTyping] = useState(false);
-  const [viewingImage, setViewingImage] = useState(null);
 
   const socketRef = useRef(null);
   const messagesEndRef = useRef(null);
@@ -377,11 +377,11 @@ const Messages = () => {
                       className="w-10 h-10 rounded-full object-cover cursor-pointer hover:ring-2 hover:ring-primary-400 transition"
                       onClick={(e) => {
                         e.stopPropagation();
-                        if (conversation.user?.profilePic) {
-                          setViewingImage(conversation.user.profilePic);
+                        if (conversation.user?._id) {
+                          navigate(`/providers/${conversation.user._id}`);
                         }
                       }}
-                      title="View picture"
+                      title="View profile"
                     />
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between">
@@ -431,11 +431,11 @@ const Messages = () => {
                   alt={selectedConversation.user?.name}
                   className="w-10 h-10 rounded-full object-cover cursor-pointer hover:ring-2 hover:ring-primary-400 transition"
                   onClick={() => {
-                    if (selectedConversation.user?.profilePic) {
-                      setViewingImage(selectedConversation.user.profilePic);
+                    if (selectedConversation.user?._id) {
+                      navigate(`/providers/${selectedConversation.user._id}`);
                     }
                   }}
-                  title="View picture"
+                  title="View profile"
                 />
                 <div className="flex-1">
                   <div className="flex items-center gap-2">
@@ -512,28 +512,6 @@ const Messages = () => {
           )}
         </div>
       </div>
-
-      {/* Image Viewer Modal */}
-      {viewingImage && (
-        <div
-          className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4"
-          onClick={() => setViewingImage(null)}
-        >
-          <div className="relative max-w-3xl max-h-[90vh]" onClick={(e) => e.stopPropagation()}>
-            <button
-              onClick={() => setViewingImage(null)}
-              className="absolute -top-10 right-0 text-white hover:text-gray-300 text-sm px-4 py-2 bg-black bg-opacity-50 rounded"
-            >
-              Close (ESC)
-            </button>
-            <img
-              src={viewingImage}
-              alt="Profile"
-              className="max-w-full max-h-[85vh] object-contain rounded-lg"
-            />
-          </div>
-        </div>
-      )}
     </div>
   );
 };
