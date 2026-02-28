@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { serviceAPI } from '../utils/api';
 import useAuthStore from '../store/authStore';
@@ -18,6 +18,7 @@ const PostService = () => {
   const { user } = useAuthStore();
   const [loading, setLoading] = useState(false);
   const [images, setImages] = useState([]);
+  const fileInputRef = useRef(null);
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -326,28 +327,30 @@ const PostService = () => {
 
         {/* Images */}
         <div>
-          <label htmlFor="image-upload" className="block text-sm font-medium mb-2">
+          <label className="block text-sm font-medium mb-2">
             Images * (Maximum 5)
           </label>
           
           <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
             <input
-              id="image-upload"
+              ref={fileInputRef}
               type="file"
               accept="image/*"
               multiple
               onChange={handleImageChange}
               className="hidden"
+              aria-label="Upload images"
             />
-            <label
-              htmlFor="image-upload"
-              className="cursor-pointer flex flex-col items-center"
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              className="cursor-pointer flex flex-col items-center w-full"
             >
               <FiUpload className="text-gray-400 mb-2" size={32} />
               <span className="text-sm text-gray-600">
                 Click to upload images
               </span>
-            </label>
+            </button>
           </div>
 
           {/* Image Previews */}
