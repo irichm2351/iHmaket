@@ -109,13 +109,13 @@ const Footer = () => {
               <a href="#" className="hover:text-primary-400 transition">
                 <FiFacebook size={20} />
               </a>
-              <a href="#" className="hover:text-primary-400 transition">
+              <a href="https://x.com/ihmaket" target="_blank" rel="noopener noreferrer" className="hover:text-primary-400 transition">
                 <SiX size={20} />
               </a>
-              <a href="#" className="hover:text-primary-400 transition">
+              <a href="https://www.instagram.com/ihmaket?igsh=MXAyN2hwaWVxZnlreQ==" target="_blank" rel="noopener noreferrer" className="hover:text-primary-400 transition">
                 <FiInstagram size={20} />
               </a>
-              <a href="#" className="hover:text-primary-400 transition">
+              <a href="https://www.tiktok.com/@ihmaket2?_r=1&_t=ZS-94HXFGpQczN" target="_blank" rel="noopener noreferrer" className="hover:text-primary-400 transition">
                 <SiTiktok size={20} />
               </a>
               <a href="#" className="hover:text-primary-400 transition">
