@@ -19,6 +19,7 @@ const Profile = () => {
   });
   const [kycPreview, setKycPreview] = useState(null);
   const [selfiePreview, setSelfiePreview] = useState(null);
+  const [showProfileImageViewer, setShowProfileImageViewer] = useState(false);
   const [cameraOn, setCameraOn] = useState(false);
   const [cameraReady, setCameraReady] = useState(false);
   const videoRef = useRef(null);
@@ -323,7 +324,9 @@ const Profile = () => {
               <img
                 src={getImageUrl(user?.profilePic) || 'https://via.placeholder.com/150'}
                 alt={user?.name}
-                className="w-32 h-32 rounded-full object-cover mx-auto border-4 border-gray-200"
+                className="w-32 h-32 rounded-full object-cover mx-auto border-4 border-gray-200 cursor-pointer hover:opacity-90 transition"
+                onClick={() => setShowProfileImageViewer(true)}
+                title="Click to view photo"
               />
               <label className="absolute bottom-0 right-0 bg-primary-600 text-white p-2 rounded-full cursor-pointer hover:bg-primary-700 transition">
                 <FiUser size={20} />
@@ -727,6 +730,28 @@ const Profile = () => {
                 </>
               )}
             </form>
+          </div>
+        </div>
+      )}
+
+      {showProfileImageViewer && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50 p-4"
+          onClick={() => setShowProfileImageViewer(false)}
+        >
+          <div className="relative max-w-2xl w-full" onClick={(e) => e.stopPropagation()}>
+            <button
+              type="button"
+              onClick={() => setShowProfileImageViewer(false)}
+              className="absolute -top-10 right-0 text-white text-sm px-3 py-1 rounded bg-white/20 hover:bg-white/30"
+            >
+              Close
+            </button>
+            <img
+              src={getImageUrl(user?.profilePic) || 'https://via.placeholder.com/600'}
+              alt={user?.name}
+              className="w-full max-h-[80vh] object-contain rounded-lg"
+            />
           </div>
         </div>
       )}
