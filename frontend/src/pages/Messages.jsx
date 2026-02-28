@@ -377,7 +377,7 @@ const Messages = () => {
                       onClick={(e) => {
                         e.stopPropagation();
                         if (conversation.user?.profilePic) {
-                          window.open(conversation.user.profilePic, '_blank', 'noopener,noreferrer');
+                          window.open(conversation.user.profilePic, '_self');
                         }
                       }}
                       title="View picture"
@@ -431,7 +431,7 @@ const Messages = () => {
                   className="w-10 h-10 rounded-full object-cover cursor-pointer hover:ring-2 hover:ring-primary-400 transition"
                   onClick={() => {
                     if (selectedConversation.user?.profilePic) {
-                      window.open(selectedConversation.user.profilePic, '_blank', 'noopener,noreferrer');
+                      window.open(selectedConversation.user.profilePic, '_self');
                     }
                   }}
                   title="View picture"

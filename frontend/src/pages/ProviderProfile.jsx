@@ -87,7 +87,7 @@ const ProviderProfile = () => {
               onClick={() => {
                 const imageUrl = getImageUrl(provider.profilePic);
                 if (imageUrl) {
-                  window.open(imageUrl, '_blank', 'noopener,noreferrer');
+                  window.open(imageUrl, '_self');
                 }
               }}
               title="View picture"
@@ -219,7 +219,7 @@ const ProviderProfile = () => {
                         onClick={() => {
                           const imageUrl = getImageUrl(review.customerId?.profilePic);
                           if (imageUrl) {
-                            window.open(imageUrl, '_blank', 'noopener,noreferrer');
+                            window.open(imageUrl, '_self');
                           }
                         }}
                         title="View picture"

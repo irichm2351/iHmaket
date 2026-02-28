@@ -193,7 +193,7 @@ const ServiceDetail = () => {
                         onClick={() => {
                           const imageUrl = getImageUrl(review.customerId?.profilePic);
                           if (imageUrl) {
-                            window.open(imageUrl, '_blank', 'noopener,noreferrer');
+                            window.open(imageUrl, '_self');
                           }
                         }}
                         title="View picture"
@@ -263,7 +263,7 @@ const ServiceDetail = () => {
                 onClick={() => {
                   const imageUrl = getImageUrl(service.providerId?.profilePic);
                   if (imageUrl) {
-                    window.open(imageUrl, '_blank', 'noopener,noreferrer');
+                    window.open(imageUrl, '_self');
                   }
                 }}
                 title="View picture"
