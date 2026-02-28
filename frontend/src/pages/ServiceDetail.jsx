@@ -190,8 +190,13 @@ const ServiceDetail = () => {
                         src={review.customerId?.profilePic || 'https://via.placeholder.com/40'}
                         alt={review.customerId?.name}
                         className="w-10 h-10 rounded-full cursor-pointer hover:ring-2 hover:ring-primary-400 transition"
-                        onClick={() => navigate(`/providers/${review.customerId?._id}`)}
-                        title="View profile"
+                        onClick={() => {
+                          const imageUrl = getImageUrl(review.customerId?.profilePic);
+                          if (imageUrl) {
+                            window.open(imageUrl, '_blank', 'noopener,noreferrer');
+                          }
+                        }}
+                        title="View picture"
                       />
                       <div className="flex-1">
                         <div className="flex items-center justify-between mb-1">
@@ -255,8 +260,13 @@ const ServiceDetail = () => {
                 src={service.providerId?.profilePic || 'https://via.placeholder.com/60'}
                 alt={service.providerId?.name}
                 className="w-16 h-16 rounded-full object-cover cursor-pointer hover:ring-2 hover:ring-primary-400 transition"
-                onClick={() => navigate(`/providers/${service.providerId?._id}`)}
-                title="View profile"
+                onClick={() => {
+                  const imageUrl = getImageUrl(service.providerId?.profilePic);
+                  if (imageUrl) {
+                    window.open(imageUrl, '_blank', 'noopener,noreferrer');
+                  }
+                }}
+                title="View picture"
               />
               <div>
                 <Link

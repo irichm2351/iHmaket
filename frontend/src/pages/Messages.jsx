@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { useSearchParams, useNavigate } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 import { format, formatDistanceToNow } from 'date-fns';
 import { FiSearch, FiSend, FiUser } from 'react-icons/fi';
 import { messageAPI, userAPI } from '../utils/api';
@@ -11,7 +11,6 @@ import toast from 'react-hot-toast';
 
 const Messages = () => {
   const { user, isAuthenticated } = useAuthStore();
-  const navigate = useNavigate();
   const {
     setConversations: setStoreConversations
   } = useMessageStore();
@@ -377,9 +376,11 @@ const Messages = () => {
                       className="w-10 h-10 rounded-full object-cover cursor-pointer hover:ring-2 hover:ring-primary-400 transition"
                       onClick={(e) => {
                         e.stopPropagation();
-                        navigate(`/providers/${conversation.user?._id}`);
+                        if (conversation.user?.profilePic) {
+                          window.open(conversation.user.profilePic, '_blank', 'noopener,noreferrer');
+                        }
                       }}
-                      title="View profile"
+                      title="View picture"
                     />
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between">
@@ -428,8 +429,12 @@ const Messages = () => {
                   src={selectedConversation.user?.profilePic || 'https://via.placeholder.com/40'}
                   alt={selectedConversation.user?.name}
                   className="w-10 h-10 rounded-full object-cover cursor-pointer hover:ring-2 hover:ring-primary-400 transition"
-                  onClick={() => navigate(`/providers/${selectedConversation.user?._id}`)}
-                  title="View profile"
+                  onClick={() => {
+                    if (selectedConversation.user?.profilePic) {
+                      window.open(selectedConversation.user.profilePic, '_blank', 'noopener,noreferrer');
+                    }
+                  }}
+                  title="View picture"
                 />
                 <div className="flex-1">
                   <div className="flex items-center gap-2">

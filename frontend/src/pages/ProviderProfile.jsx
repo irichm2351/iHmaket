@@ -83,7 +83,14 @@ const ProviderProfile = () => {
             <img
               src={getImageUrl(provider.profilePic)}
               alt={provider.name}
-              className="w-32 h-32 rounded-full object-cover border-4 border-primary-100"
+              className="w-32 h-32 rounded-full object-cover border-4 border-primary-100 cursor-pointer hover:ring-2 hover:ring-primary-400 transition"
+              onClick={() => {
+                const imageUrl = getImageUrl(provider.profilePic);
+                if (imageUrl) {
+                  window.open(imageUrl, '_blank', 'noopener,noreferrer');
+                }
+              }}
+              title="View picture"
             />
           </div>
 
@@ -209,8 +216,13 @@ const ProviderProfile = () => {
                         src={getImageUrl(review.customerId?.profilePic)}
                         alt={review.customerId?.name}
                         className="w-12 h-12 rounded-full object-cover cursor-pointer hover:ring-2 hover:ring-primary-400 transition"
-                        onClick={() => navigate(`/providers/${review.customerId?._id}`)}
-                        title="View profile"
+                        onClick={() => {
+                          const imageUrl = getImageUrl(review.customerId?.profilePic);
+                          if (imageUrl) {
+                            window.open(imageUrl, '_blank', 'noopener,noreferrer');
+                          }
+                        }}
+                        title="View picture"
                       />
                       <div>
                         <h4 className="font-semibold text-gray-900">

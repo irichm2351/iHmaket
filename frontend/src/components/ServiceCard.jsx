@@ -96,9 +96,12 @@ const ServiceCard = ({ service, showProvider = true }) => {
               className="w-8 h-8 rounded-full object-cover cursor-pointer hover:ring-2 hover:ring-primary-400 transition"
               onClick={(e) => {
                 e.preventDefault();
-                window.location.href = `/providers/${service.providerId._id}`;
+                const imageUrl = getImageUrl(service.providerId.profilePic);
+                if (imageUrl) {
+                  window.open(imageUrl, '_blank', 'noopener,noreferrer');
+                }
               }}
-              title="View profile"
+              title="View picture"
             />
             <span className="text-sm text-gray-700 font-medium">
               {service.providerId.name}
