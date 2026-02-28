@@ -208,7 +208,9 @@ const ProviderProfile = () => {
                       <img
                         src={getImageUrl(review.customerId?.profilePic)}
                         alt={review.customerId?.name}
-                        className="w-12 h-12 rounded-full object-cover"
+                        className="w-12 h-12 rounded-full object-cover cursor-pointer hover:ring-2 hover:ring-primary-400 transition"
+                        onClick={() => navigate(`/providers/${review.customerId?._id}`)}
+                        title="View profile"
                       />
                       <div>
                         <h4 className="font-semibold text-gray-900">

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import { format, formatDistanceToNow } from 'date-fns';
 import { FiSearch, FiSend, FiUser } from 'react-icons/fi';
 import { messageAPI, userAPI } from '../utils/api';
@@ -11,6 +11,7 @@ import toast from 'react-hot-toast';
 
 const Messages = () => {
   const { user, isAuthenticated } = useAuthStore();
+  const navigate = useNavigate();
   const {
     setConversations: setStoreConversations
   } = useMessageStore();
@@ -373,7 +374,12 @@ const Messages = () => {
                     <img
                       src={conversation.user?.profilePic || 'https://via.placeholder.com/40'}
                       alt={conversation.user?.name}
-                      className="w-10 h-10 rounded-full object-cover"
+                      className="w-10 h-10 rounded-full object-cover cursor-pointer hover:ring-2 hover:ring-primary-400 transition"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        navigate(`/providers/${conversation.user?._id}`);
+                      }}
+                      title="View profile"
                     />
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between">
@@ -421,7 +427,9 @@ const Messages = () => {
                 <img
                   src={selectedConversation.user?.profilePic || 'https://via.placeholder.com/40'}
                   alt={selectedConversation.user?.name}
-                  className="w-10 h-10 rounded-full object-cover"
+                  className="w-10 h-10 rounded-full object-cover cursor-pointer hover:ring-2 hover:ring-primary-400 transition"
+                  onClick={() => navigate(`/providers/${selectedConversation.user?._id}`)}
+                  title="View profile"
                 />
                 <div className="flex-1">
                   <div className="flex items-center gap-2">

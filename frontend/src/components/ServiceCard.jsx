@@ -93,7 +93,12 @@ const ServiceCard = ({ service, showProvider = true }) => {
             <img
               src={service.providerId.profilePic || 'https://via.placeholder.com/32'}
               alt={service.providerId.name}
-              className="w-8 h-8 rounded-full object-cover"
+              className="w-8 h-8 rounded-full object-cover cursor-pointer hover:ring-2 hover:ring-primary-400 transition"
+              onClick={(e) => {
+                e.preventDefault();
+                window.location.href = `/providers/${service.providerId._id}`;
+              }}
+              title="View profile"
             />
             <span className="text-sm text-gray-700 font-medium">
               {service.providerId.name}
