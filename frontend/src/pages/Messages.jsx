@@ -215,10 +215,6 @@ const Messages = () => {
   }, [selectedConversation]);
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
-
-  useEffect(() => {
     conversationsRef.current = conversations;
   }, [conversations]);
 
@@ -240,9 +236,6 @@ const Messages = () => {
       const list = response.data.conversations || [];
       setConversations(list);
       setStoreConversations(list); // Sync with message store for unread tracking
-      if (!selectedConversation && list.length > 0) {
-        setSelectedConversation(list[0]);
-      }
     } catch (error) {
       toast.error('Failed to load conversations');
     } finally {
