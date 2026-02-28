@@ -244,7 +244,7 @@ const ServiceDetail = () => {
             </button>
 
             <Link
-              to={`/messages?userId=${service.providerId?._id}`}
+              to={`/messages/${service.providerId?._id}`}
               className="w-full btn btn-outline flex items-center justify-center"
             >
               <FiMessageSquare className="mr-2" />

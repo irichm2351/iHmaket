@@ -49,7 +49,7 @@ const ProviderProfile = () => {
       return;
     }
 
-    navigate('/messages', { state: { providerId: id } });
+    navigate(`/messages/${id}`);
   };
 
   if (loading) {
