@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { useSearchParams, useNavigate } from 'react-router-dom';
+import { useSearchParams, useNavigate, useParams } from 'react-router-dom';
 import { format, formatDistanceToNow } from 'date-fns';
-import { FiSearch, FiSend, FiUser } from 'react-icons/fi';
+import { FiSearch, FiSend, FiUser, FiArrowLeft } from 'react-icons/fi';
 import { messageAPI, userAPI } from '../utils/api';
 import useAuthStore from '../store/authStore';
 import useMessageStore from '../store/messageStore';
@@ -12,6 +12,7 @@ import toast from 'react-hot-toast';
 const Messages = () => {
   const { user, isAuthenticated } = useAuthStore();
   const navigate = useNavigate();
+  const { userId: routeUserId } = useParams();
   const {
     setConversations: setStoreConversations
   } = useMessageStore();
@@ -33,6 +34,8 @@ const Messages = () => {
   const selectedConversationRef = useRef(null);
   const lastTypingSentRef = useRef(0);
   const notificationSoundRef = useRef(null);
+
+  const isMobileViewport = () => window.innerWidth < 1024;
 
   // Request notification permission on mount
   useEffect(() => {
@@ -210,6 +213,35 @@ const Messages = () => {
   }, [searchParams, isAuthenticated, user?._id]);
 
   useEffect(() => {
+    if (!routeUserId || !isAuthenticated) return;
+
+    const openConversationFromRoute = async () => {
+      try {
+        const existing = conversationsRef.current.find((c) => c.user?._id === routeUserId);
+        if (existing) {
+          setSelectedConversation(existing);
+          return;
+        }
+
+        const response = await userAPI.getUserById(routeUserId);
+        const newConversation = {
+          user: response.data.user,
+          lastMessage: null,
+          unreadCount: 0
+        };
+
+        setConversations((prev) => [newConversation, ...prev]);
+        setSelectedConversation(newConversation);
+      } catch (error) {
+        toast.error('Failed to open conversation');
+        navigate('/messages');
+      }
+    };
+
+    openConversationFromRoute();
+  }, [routeUserId, isAuthenticated, user?._id, navigate]);
+
+  useEffect(() => {
     if (!selectedConversation?.user?._id) return;
     fetchMessages(selectedConversation.user._id);
   }, [selectedConversation]);
@@ -316,6 +348,17 @@ const Messages = () => {
     );
   }, [conversations, search]);
 
+  const handleConversationClick = (conversation) => {
+    if (!conversation?.user?._id) return;
+
+    if (isMobileViewport()) {
+      navigate(`/messages/${conversation.user._id}`);
+      return;
+    }
+
+    setSelectedConversation(conversation);
+  };
+
   if (!isAuthenticated) {
     return (
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -331,7 +374,7 @@ const Messages = () => {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Conversations */}
-        <div className="lg:col-span-1 card p-4 h-[75vh] flex flex-col">
+        <div className={`lg:col-span-1 card p-4 h-[75vh] flex flex-col ${routeUserId ? 'hidden lg:flex' : ''}`}>
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-xl font-bold">Messages</h2>
           </div>
@@ -356,7 +399,7 @@ const Messages = () => {
               {filteredConversations.map((conversation) => (
                 <button
                   key={conversation.user?._id}
-                  onClick={() => setSelectedConversation(conversation)}
+                  onClick={() => handleConversationClick(conversation)}
                   className={`w-full text-left p-3 rounded-lg border transition ${
                     selectedConversation?.user?._id === conversation.user?._id
                       ? 'border-primary-600 bg-primary-50'
@@ -415,10 +458,18 @@ const Messages = () => {
         </div>
 
         {/* Messages */}
-        <div className="lg:col-span-2 card p-4 h-[75vh] flex flex-col">
+        <div className={`lg:col-span-2 card p-4 h-[75vh] flex flex-col ${routeUserId ? 'flex' : 'hidden lg:flex'}`}>
           {selectedConversation ? (
             <>
               <div className="border-b pb-3 mb-4 flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => navigate('/messages')}
+                  className="lg:hidden text-gray-600 hover:text-gray-900"
+                  aria-label="Back to messages list"
+                >
+                  <FiArrowLeft size={20} />
+                </button>
                 <img
                   src={selectedConversation.user?.profilePic || 'https://via.placeholder.com/40'}
                   alt={selectedConversation.user?.name}

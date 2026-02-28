@@ -78,6 +78,14 @@ function App() {
           }
         />
         <Route
+          path="messages/:userId"
+          element={
+            <ProtectedRoute>
+              <Messages />
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="bookings"
           element={
             <ProtectedRoute>
