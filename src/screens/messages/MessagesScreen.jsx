@@ -179,11 +179,6 @@ const MessagesScreen = () => {
         
         setMessages(prevMessages => [...prevMessages, newMessage]);
         setMessageText('');
-        
-        // Scroll to bottom
-        setTimeout(() => {
-          scrollViewRef.current?.scrollToEnd({ animated: true });
-        }, 100);
       }
     } catch (error) {
       console.error('Error sending message:', error);
@@ -637,7 +632,6 @@ const MessagesScreen = () => {
         <ScrollView
           ref={scrollViewRef}
           style={styles.messagesList}
-          onContentSizeChange={() => scrollViewRef.current?.scrollToEnd({ animated: true })}
         >
           {messages.map((msg, index) => {
             const isMyMessage = msg.senderId?._id === user?._id || msg.senderId === user?._id;
