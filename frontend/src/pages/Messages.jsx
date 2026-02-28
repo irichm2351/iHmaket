@@ -26,6 +26,7 @@ const Messages = () => {
   const [sending, setSending] = useState(false);
   const [search, setSearch] = useState('');
   const [typing, setTyping] = useState(false);
+  const [userOnlineStatus, setUserOnlineStatus] = useState({}); // Track online status for users
 
   const socketRef = useRef(null);
   const messagesEndRef = useRef(null);
@@ -133,17 +134,55 @@ const Messages = () => {
       }
     };
 
+    const handleUserOnline = (data) => {
+      const userId = data?.userId;
+      if (!userId) return;
+
+      setUserOnlineStatus((prev) => {
+        if (!prev[userId]) {
+          // User came online
+          if (selectedConversationRef.current?.user?._id === userId) {
+            toast.success('User is now online', { duration: 2000 });
+          }
+          return { ...prev, [userId]: true };
+        }
+        return prev;
+      });
+    };
+
+    const handleUserOffline = (data) => {
+      const userId = data?.userId;
+      if (!userId) return;
+
+      setUserOnlineStatus((prev) => {
+        if (prev[userId]) {
+          // User went offline
+          if (selectedConversationRef.current?.user?._id === userId) {
+            toast.error('User is now offline', { duration: 2000 });
+          }
+          return { ...prev, [userId]: false };
+        }
+        return prev;
+      });
+    };
+
     // Remove any existing listeners to prevent duplicates
     socketRef.current.off('receive_message');
     socketRef.current.off('user_typing');
+    socketRef.current.off('user_online');
+    socketRef.current.off('user_offline');
     
     socketRef.current.on('receive_message', handleIncomingMessage);
     socketRef.current.on('user_typing', handleTyping);
+    socketRef.current.on('user_online', handleUserOnline);
+    socketRef.current.on('user_offline', handleUserOffline);
     
     return () => {
       if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
       socketRef.current?.off('receive_message');
       socketRef.current?.off('user_typing');
+      socketRef.current?.off('user_online');
+      socketRef.current?.off('user_offline');
       // Don't disconnect - keep connection alive
       // socketRef.current?.disconnect();
       // socketRef.current = null;
@@ -244,6 +283,22 @@ const Messages = () => {
   useEffect(() => {
     if (!selectedConversation?.user?._id) return;
     fetchMessages(selectedConversation.user._id);
+    
+    // Fetch initial online status
+    const fetchOnlineStatus = async () => {
+      try {
+        const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/users/${selectedConversation.user._id}/online-status`);
+        const data = await response.json();
+        setUserOnlineStatus((prev) => ({
+          ...prev,
+          [selectedConversation.user._id]: data.isOnline
+        }));
+      } catch (error) {
+        console.error('Failed to fetch online status:', error);
+      }
+    };
+    
+    fetchOnlineStatus();
   }, [selectedConversation]);
 
   useEffect(() => {
@@ -492,7 +547,12 @@ const Messages = () => {
                       </span>
                     )}
                   </div>
-                  <p className="text-xs text-gray-500">Online</p>
+                  <div className="flex items-center gap-2">
+                    <div className={`w-2 h-2 rounded-full ${userOnlineStatus[selectedConversation.user?._id] ? 'bg-green-500' : 'bg-gray-400'}`} />
+                    <p className={`text-xs ${userOnlineStatus[selectedConversation.user?._id] ? 'text-green-600 font-medium' : 'text-gray-500'}`}>
+                      {userOnlineStatus[selectedConversation.user?._id] ? 'Online' : 'Offline'}
+                    </p>
+                  </div>
                 </div>
               </div>
 

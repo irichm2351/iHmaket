@@ -144,6 +144,16 @@ app.get('/api/cloudinary-check', (req, res) => {
   });
 });
 
+// User online status check
+app.get('/api/users/:userId/online-status', (req, res) => {
+  const { userId } = req.params;
+  const isOnline = app.get('onlineUsers').has(userId);
+  res.json({ 
+    userId,
+    isOnline 
+  });
+});
+
 // Socket.io connection handling
 const onlineUsers = new Map();
 
@@ -157,6 +167,9 @@ io.on('connection', (socket) => {
   socket.on('user_connected', (userId) => {
     onlineUsers.set(userId, socket.id);
     console.log(`User ${userId} connected with socket ${socket.id}`);
+    
+    // Broadcast to all clients that this user is online
+    io.emit('user_online', { userId });
   });
 
   // Handle sending messages
@@ -177,12 +190,19 @@ io.on('connection', (socket) => {
 
   // Handle disconnection
   socket.on('disconnect', () => {
+    let disconnectedUserId = null;
     for (let [userId, socketId] of onlineUsers.entries()) {
       if (socketId === socket.id) {
+        disconnectedUserId = userId;
         onlineUsers.delete(userId);
         console.log(`User ${userId} disconnected`);
         break;
       }
+    }
+    
+    // Broadcast to all clients that this user is offline
+    if (disconnectedUserId) {
+      io.emit('user_offline', { userId: disconnectedUserId });
     }
   });
 });
