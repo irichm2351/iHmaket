@@ -205,9 +205,52 @@ app.use((req, res) => {
   });
 });
 
+// Keep-alive mechanism to prevent Render from sleeping
+// Ping self every 14 minutes (Render free tier sleeps after 15 mins)
+const KEEP_ALIVE_INTERVAL = 14 * 60 * 1000; // 14 minutes in milliseconds
+let keepAliveInterval;
+
+function startKeepAlive() {
+  // Only run in production and if not explicitly disabled
+  if (process.env.NODE_ENV === 'production' && process.env.DISABLE_KEEP_ALIVE !== 'true') {
+    const axios = require('axios');
+    const baseUrl = process.env.RENDER_EXTERNAL_URL || process.env.BASE_URL;
+    
+    if (baseUrl) {
+      keepAliveInterval = setInterval(async () => {
+        try {
+          await axios.get(`${baseUrl}/api/health`);
+          console.log(`🏓 Keep-alive ping sent at ${new Date().toISOString()}`);
+        } catch (error) {
+          console.error('❌ Keep-alive ping failed:', error.message);
+        }
+      }, KEEP_ALIVE_INTERVAL);
+      
+      console.log('🔄 Keep-alive mechanism started');
+    } else {
+      console.warn('⚠️ Keep-alive disabled: RENDER_EXTERNAL_URL or BASE_URL not set');
+    }
+  }
+}
+
+// Cleanup on process termination
+process.on('SIGTERM', () => {
+  console.log('SIGTERM received, cleaning up...');
+  if (keepAliveInterval) {
+    clearInterval(keepAliveInterval);
+  }
+  server.close(() => {
+    console.log('Server closed');
+    process.exit(0);
+  });
+});
+
 // Start server
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
   console.log(`📡 Environment: ${process.env.NODE_ENV}`);
+  
+  // Start keep-alive after server is running
+  startKeepAlive();
 });

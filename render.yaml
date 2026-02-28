@@ -1,0 +1,49 @@
+services:
+  # Backend API Service
+  - type: web
+    name: ihmaket-backend
+    env: node
+    region: oregon
+    plan: starter  # $7/month paid plan
+    buildCommand: cd backend && npm install
+    startCommand: cd backend && npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 5000
+      - key: MONGODB_URI
+        sync: false  # Add this in Render dashboard
+      - key: JWT_SECRET
+        sync: false  # Add this in Render dashboard
+      - key: JWT_EXPIRE
+        value: 7d
+      - key: CLOUDINARY_CLOUD_NAME
+        sync: false  # Add this in Render dashboard
+      - key: CLOUDINARY_API_KEY
+        sync: false  # Add this in Render dashboard
+      - key: CLOUDINARY_API_SECRET
+        sync: false  # Add this in Render dashboard
+      - key: CLIENT_URL
+        value: https://ihmaket-frontend.onrender.com
+      - key: RENDER_EXTERNAL_URL
+        value: https://ihmaket-backend.onrender.com
+      - key: BASE_URL
+        value: https://ihmaket-backend.onrender.com
+
+  # Frontend Service
+  - type: web
+    name: ihmaket-frontend
+    env: node
+    region: oregon
+    plan: starter  # IMPORTANT: Frontend also needs to be on paid plan to avoid sleeping
+    buildCommand: cd frontend && npm install && npm run build
+    startCommand: cd frontend && npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3000
+      - key: VITE_API_URL
+        value: https://ihmaket-backend.onrender.com/api

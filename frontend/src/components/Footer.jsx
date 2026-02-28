@@ -124,7 +124,7 @@ const Footer = () => {
             </div>
             <p className="text-sm text-gray-400">
               Email: support@ihmaket.com<br />
-              Phone: +234 800 123 4567
+              Phone: +234 815 598 4660
             </p>
           </div>
         </div>

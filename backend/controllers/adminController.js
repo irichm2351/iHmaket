@@ -351,6 +351,45 @@ exports.approveKyc = async (req, res) => {
     user.role = 'provider'; // Automatically change to provider role
     await user.save();
 
+    // Send approval message to user
+    try {
+      // Get or create system admin user for sending messages
+      let adminUser = await User.findOne({ role: 'admin' }).sort({ createdAt: 1 });
+      
+      if (!adminUser) {
+        // If no admin exists, create a system admin account for messages
+        adminUser = await User.findOne({ email: 'system@ihmaket.com' });
+        if (!adminUser) {
+          adminUser = new User({
+            name: 'iHmaket Admin',
+            email: 'system@ihmaket.com',
+            password: 'system_admin_password', // Hashed in pre-save hook (won't be used for login)
+            role: 'admin',
+            isVerified: true
+          });
+          await adminUser.save();
+        }
+      }
+
+      // Generate conversation ID
+      const conversationId = Message.generateConversationId(adminUser._id, user._id);
+
+      // Create approval message
+      const approvalMessage = new Message({
+        conversationId,
+        senderId: adminUser._id,
+        receiverId: user._id,
+        text: 'You have been successfully verified. You can now publish your service advertisements on IHmaket. Please help us keep IHmaket professional and trustworthy by maintaining high standards in your listings and interactions. Always stay active on your account and respond promptly to customer bookings and inquiries to provide the best service experience',
+        isRead: false
+      });
+
+      await approvalMessage.save();
+      console.log(`✅ KYC approval message sent to user ${user._id}`);
+    } catch (messageError) {
+      console.error('⚠️ Failed to send KYC approval message:', messageError.message);
+      // Don't fail the KYC approval if message sending fails
+    }
+
     res.json({
       success: true,
       message: 'KYC approved successfully',
