@@ -24,6 +24,7 @@ const Messages = () => {
   const [sending, setSending] = useState(false);
   const [search, setSearch] = useState('');
   const [typing, setTyping] = useState(false);
+  const [viewingImage, setViewingImage] = useState(null);
 
   const socketRef = useRef(null);
   const messagesEndRef = useRef(null);
@@ -377,7 +378,7 @@ const Messages = () => {
                       onClick={(e) => {
                         e.stopPropagation();
                         if (conversation.user?.profilePic) {
-                          window.open(conversation.user.profilePic, '_self');
+                          setViewingImage(conversation.user.profilePic);
                         }
                       }}
                       title="View picture"
@@ -431,7 +432,7 @@ const Messages = () => {
                   className="w-10 h-10 rounded-full object-cover cursor-pointer hover:ring-2 hover:ring-primary-400 transition"
                   onClick={() => {
                     if (selectedConversation.user?.profilePic) {
-                      window.open(selectedConversation.user.profilePic, '_self');
+                      setViewingImage(selectedConversation.user.profilePic);
                     }
                   }}
                   title="View picture"
@@ -511,6 +512,28 @@ const Messages = () => {
           )}
         </div>
       </div>
+
+      {/* Image Viewer Modal */}
+      {viewingImage && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4"
+          onClick={() => setViewingImage(null)}
+        >
+          <div className="relative max-w-3xl max-h-[90vh]" onClick={(e) => e.stopPropagation()}>
+            <button
+              onClick={() => setViewingImage(null)}
+              className="absolute -top-10 right-0 text-white hover:text-gray-300 text-sm px-4 py-2 bg-black bg-opacity-50 rounded"
+            >
+              Close (ESC)
+            </button>
+            <img
+              src={viewingImage}
+              alt="Profile"
+              className="max-w-full max-h-[85vh] object-contain rounded-lg"
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -21,6 +21,7 @@ const ServiceDetail = () => {
     description: '',
   });
   const [reportingLoading, setReportingLoading] = useState(false);
+  const [viewingImage, setViewingImage] = useState(null);
   const [bookingData, setBookingData] = useState({
     scheduledDate: '',
     scheduledTime: '',
@@ -193,7 +194,7 @@ const ServiceDetail = () => {
                         onClick={() => {
                           const imageUrl = getImageUrl(review.customerId?.profilePic);
                           if (imageUrl) {
-                            window.open(imageUrl, '_self');
+                            setViewingImage(imageUrl);
                           }
                         }}
                         title="View picture"
@@ -263,7 +264,7 @@ const ServiceDetail = () => {
                 onClick={() => {
                   const imageUrl = getImageUrl(service.providerId?.profilePic);
                   if (imageUrl) {
-                    window.open(imageUrl, '_self');
+                    setViewingImage(imageUrl);
                   }
                 }}
                 title="View picture"
@@ -479,6 +480,29 @@ const ServiceDetail = () => {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Image Viewer Modal */}
+      {viewingImage && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-75 z-50 flex items-center justify-center p-4"
+          onClick={() => setViewingImage(null)}
+        >
+          <div className="relative max-w-3xl w-full" onClick={(e) => e.stopPropagation()}>
+            <button
+              onClick={() => setViewingImage(null)}
+              className="absolute -top-10 right-0 text-white hover:text-gray-300 text-lg font-medium"
+            >
+              Close (ESC)
+            </button>
+            <img
+              src={viewingImage}
+              alt="Profile"
+              className="w-full h-auto max-h-[85vh] object-contain rounded-lg"
+              onClick={(e) => e.stopPropagation()}
+            />
           </div>
         </div>
       )}

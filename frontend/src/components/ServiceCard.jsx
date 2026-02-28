@@ -9,6 +9,7 @@ const ServiceCard = ({ service, showProvider = true }) => {
   const { isAuthenticated } = useAuthStore();
   const [isSaved, setIsSaved] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [viewingImage, setViewingImage] = useState(null);
 
   const handleSave = async (e) => {
     e.preventDefault();
@@ -98,7 +99,7 @@ const ServiceCard = ({ service, showProvider = true }) => {
                 e.preventDefault();
                 const imageUrl = getImageUrl(service.providerId.profilePic);
                 if (imageUrl) {
-                  window.open(imageUrl, '_self');
+                  setViewingImage(imageUrl);
                 }
               }}
               title="View picture"
@@ -139,6 +140,35 @@ const ServiceCard = ({ service, showProvider = true }) => {
           {service.location?.city}, {service.location?.state}
         </div>
       </div>
+
+      {/* Image Viewer Modal */}
+      {viewingImage && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-75 z-50 flex items-center justify-center p-4"
+          onClick={(e) => {
+            e.preventDefault();
+            setViewingImage(null);
+          }}
+        >
+          <div className="relative max-w-3xl w-full" onClick={(e) => e.stopPropagation()}>
+            <button
+              onClick={(e) => {
+                e.preventDefault();
+                setViewingImage(null);
+              }}
+              className="absolute -top-10 right-0 text-white hover:text-gray-300 text-lg font-medium"
+            >
+              Close (ESC)
+            </button>
+            <img
+              src={viewingImage}
+              alt="Profile"
+              className="w-full h-auto max-h-[85vh] object-contain rounded-lg"
+              onClick={(e) => e.stopPropagation()}
+            />
+          </div>
+        </div>
+      )}
     </Link>
   );
 };
