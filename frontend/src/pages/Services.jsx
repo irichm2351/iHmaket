@@ -48,6 +48,20 @@ const Services = () => {
     page: parseInt(searchParams.get('page')) || 1,
   });
 
+  // Sync filters with URL params when they change
+  useEffect(() => {
+    setFilters({
+      search: searchParams.get('search') || '',
+      category: searchParams.get('category') || 'All',
+      state: searchParams.get('state') || '',
+      city: searchParams.get('city') || '',
+      minPrice: searchParams.get('minPrice') || '',
+      maxPrice: searchParams.get('maxPrice') || '',
+      sort: searchParams.get('sort') || 'newest',
+      page: parseInt(searchParams.get('page')) || 1,
+    });
+  }, [searchParams]);
+
   useEffect(() => {
     fetchServices();
   }, [filters]);
