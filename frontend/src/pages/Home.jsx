@@ -76,16 +76,14 @@ const Home = () => {
               Connect with professionals for all your service needs
             </p>
 
-            {/* State Filter Bar */}
-            <div className="max-w-3xl mx-auto mb-6">
-              <div className="bg-white rounded-lg p-4 shadow-lg">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Filter by State
-                </label>
+            {/* State Filter and Search Bar */}
+            <form onSubmit={handleSearch} className="max-w-4xl mx-auto">
+              <div className="flex flex-col sm:flex-row gap-3">
+                {/* State Dropdown */}
                 <select
                   value={selectedState}
                   onChange={(e) => setSelectedState(e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary-600 focus:border-transparent"
+                  className="px-4 py-4 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary-300 bg-white sm:w-auto"
                 >
                   <option value="">All States</option>
                   {Object.keys(nigeriaData).sort().map((state) => (
@@ -94,12 +92,8 @@ const Home = () => {
                     </option>
                   ))}
                 </select>
-              </div>
-            </div>
 
-            {/* Search Bar */}
-            <form onSubmit={handleSearch} className="max-w-3xl mx-auto">
-              <div className="flex flex-col sm:flex-row gap-3">
+                {/* Search Bar */}
                 <div className="flex-1 relative">
                   <FiSearch className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
                   <input
@@ -110,6 +104,8 @@ const Home = () => {
                     className="w-full pl-12 pr-4 py-4 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary-300"
                   />
                 </div>
+
+                {/* Search Button */}
                 <button
                   type="submit"
                   className="btn bg-white text-primary-600 hover:bg-gray-100 px-8 py-4"
