@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { FiSearch, FiArrowRight } from 'react-icons/fi';
+import { FiSearch, FiGrid, FiList } from 'react-icons/fi';
 import { serviceAPI } from '../utils/api';
 import ServiceCard from '../components/ServiceCard';
 import Loader from '../components/Loader';
@@ -23,10 +23,18 @@ const Home = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [featuredServices, setFeaturedServices] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [viewMode, setViewMode] = useState(() => {
+    return localStorage.getItem('homeViewMode') || 'grid';
+  });
 
   useEffect(() => {
     fetchFeaturedServices();
   }, []);
+
+  const handleViewModeChange = (mode) => {
+    setViewMode(mode);
+    localStorage.setItem('homeViewMode', mode);
+  };
 
   const fetchFeaturedServices = async () => {
     try {
@@ -113,13 +121,32 @@ const Home = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center mb-12">
             <h2 className="text-3xl font-bold">Featured Services</h2>
-            <Link
-              to="/services"
-              className="flex items-center text-primary-600 hover:text-primary-700 font-medium"
-            >
-              View All
-              <FiArrowRight className="ml-2" />
-            </Link>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => handleViewModeChange('grid')}
+                className={`p-2 rounded-lg transition ${
+                  viewMode === 'grid'
+                    ? 'bg-primary-600 text-white'
+                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                }`}
+                title="Grid view"
+                aria-label="Grid view"
+              >
+                <FiGrid size={20} />
+              </button>
+              <button
+                onClick={() => handleViewModeChange('list')}
+                className={`p-2 rounded-lg transition ${
+                  viewMode === 'list'
+                    ? 'bg-primary-600 text-white'
+                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                }`}
+                title="List view"
+                aria-label="List view"
+              >
+                <FiList size={20} />
+              </button>
+            </div>
           </div>
 
           {loading ? (
@@ -127,9 +154,15 @@ const Home = () => {
               <Loader size="lg" />
             </div>
           ) : featuredServices.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className={
+              viewMode === 'list'
+                ? 'space-y-2'
+                : 'grid grid-cols-2 lg:grid-cols-4 gap-2'
+            }>
               {featuredServices.map((service) => (
-                <ServiceCard key={service._id} service={service} />
+                <div key={service._id} className={viewMode === 'list' ? 'h-32' : ''}>
+                  <ServiceCard service={service} viewMode={viewMode} />
+                </div>
               ))}
             </div>
           ) : (
