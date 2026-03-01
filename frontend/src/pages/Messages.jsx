@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams, useNavigate, useParams } from 'react-router-dom';
 import { format, formatDistanceToNow } from 'date-fns';
 import { FiSearch, FiSend, FiUser, FiArrowLeft } from 'react-icons/fi';
-import { messageAPI, userAPI } from '../utils/api';
+import { messageAPI, userAPI, API_URL } from '../utils/api';
 import useAuthStore from '../store/authStore';
 import useMessageStore from '../store/messageStore';
 import socket, { connectSocket } from '../utils/socket';
@@ -287,7 +287,7 @@ const Messages = () => {
     // Fetch initial online status
     const fetchOnlineStatus = async () => {
       try {
-        const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/users/${selectedConversation.user._id}/online-status`);
+        const response = await fetch(`${API_URL.replace('/api', '')}/api/users/${selectedConversation.user._id}/online-status`);
         const data = await response.json();
         setUserOnlineStatus((prev) => ({
           ...prev,

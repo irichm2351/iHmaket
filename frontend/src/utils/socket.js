@@ -1,6 +1,16 @@
 import { io } from 'socket.io-client';
 
-const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || 'http://localhost:5000';
+// Use production socket URL for deployed app, otherwise use local
+const getSocketUrl = () => {
+  if (typeof window !== 'undefined' && window.location.hostname !== 'localhost') {
+    // Production - use Render backend
+    return 'https://ihmaket-backend.onrender.com';
+  }
+  // Development - use local or environment variable
+  return import.meta.env.VITE_SOCKET_URL || 'http://localhost:5000';
+};
+
+const SOCKET_URL = getSocketUrl();
 
 const socket = io(SOCKET_URL, {
   autoConnect: false,
