@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { FiFilter, FiX, FiGrid3X3, FiList } from 'react-icons/fi';
+import { FiFilter, FiX, FiGrid, FiList } from 'react-icons/fi';
 import { serviceAPI } from '../utils/api';
 import ServiceCard from '../components/ServiceCard';
 import Loader from '../components/Loader';
@@ -115,7 +115,7 @@ const Services = () => {
             title="Grid view"
             aria-label="Grid view"
           >
-            <FiGrid3X3 size={20} />
+            <FiGrid size={20} />
           </button>
           <button
             onClick={() => handleViewModeChange('list')}
