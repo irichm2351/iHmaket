@@ -160,9 +160,7 @@ const Home = () => {
                 : 'grid grid-cols-2 lg:grid-cols-4 gap-2'
             }>
               {featuredServices.map((service) => (
-                <div key={service._id} className={viewMode === 'list' ? 'h-32' : 'h-full'}>
-                  <ServiceCard service={service} viewMode={viewMode} />
-                </div>
+                <ServiceCard key={service._id} service={service} viewMode={viewMode} />
               ))}
             </div>
           ) : (
