@@ -170,7 +170,7 @@ const ServiceDetail = () => {
               </div>
               <div className="flex items-center text-gray-600">
                 <FiMapPin className="mr-1" />
-                {service.location?.lga}, {service.location?.state}
+                {service.location?.lga || service.location?.city}, {service.location?.state}
               </div>
             </div>
 
@@ -302,7 +302,7 @@ const ServiceDetail = () => {
               )}
               <div className="flex items-center text-gray-600">
                 <FiMapPin className="mr-2" />
-                {service.providerId?.location?.lga}, {service.providerId?.location?.state}
+                {service.providerId?.location?.lga || service.providerId?.location?.city}, {service.providerId?.location?.state}
               </div>
             </div>
 

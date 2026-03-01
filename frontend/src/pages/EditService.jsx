@@ -339,16 +339,17 @@ const EditService = () => {
 
         {/* LGA / Local Government Area */}
         <div>
-          <label className="block text-sm font-medium mb-2">Local Government Area (LGA)</label>
+          <label className="block text-sm font-medium mb-2">Local Government Area (LGA) *</label>
           <select
             name="location.lga"
             value={formData.location.lga || ''}
             onChange={handleChange}
             disabled={!formData.location.state}
+            required
             className="input"
           >
             <option value="">
-              {formData.location.state ? 'Select LGA (Optional)' : 'Select a state first'}
+              {formData.location.state ? 'Select LGA' : 'Select a state first'}
             </option>
             {getAvailableLGAs().map((lga) => (
               <option key={lga} value={lga}>{lga}</option>
