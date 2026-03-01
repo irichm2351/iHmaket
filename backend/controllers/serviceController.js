@@ -199,7 +199,7 @@ exports.getServices = async (req, res) => {
 
     // Category filter
     if (category) {
-      query.category = category;
+      query.category = new RegExp(`^${category}$`, 'i');
     }
 
     // Location filters

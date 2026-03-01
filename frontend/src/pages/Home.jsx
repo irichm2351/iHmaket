@@ -127,7 +127,7 @@ const Home = () => {
             {categories.map((category) => (
               <Link
                 key={category.name}
-                to={`/services?category=${category.name}`}
+                to={`/services?category=${encodeURIComponent(category.name)}`}
                 className="card p-6 text-center hover:shadow-xl transition-all group"
               >
                 <div className="text-4xl mb-3 group-hover:scale-110 transition-transform">
