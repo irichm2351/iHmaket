@@ -86,14 +86,14 @@ const ServiceCard = ({ service, showProvider = true, viewMode = 'grid' }) => {
       </div>
 
       {/* Content */}
-      <div className={`${viewMode === 'list' ? 'flex-1' : ''} p-3`}>
+      <div className={`${viewMode === 'list' ? 'flex-1' : ''} p-2`}>
         {/* Category */}
-        <span className="inline-block px-2 py-0.5 bg-primary-100 text-primary-700 text-xs font-medium rounded-full mb-1.5">
+        <span className="inline-block px-1.5 py-0.5 bg-primary-100 text-primary-700 text-xs font-medium rounded-full mb-1">
           {service.category}
         </span>
 
         {/* Title */}
-        <h3 className={`font-semibold text-gray-900 mb-1.5 ${
+        <h3 className={`font-semibold text-gray-900 mb-1 ${
           viewMode === 'list' ? 'text-base line-clamp-1' : 'text-lg line-clamp-2'
         }`}>
           {service.title}
@@ -101,14 +101,14 @@ const ServiceCard = ({ service, showProvider = true, viewMode = 'grid' }) => {
 
         {/* Description */}
         {viewMode !== 'list' && (
-          <p className="text-sm text-gray-600 mb-2 line-clamp-2">
+          <p className="text-sm text-gray-600 mb-1.5 line-clamp-2">
             {service.description}
           </p>
         )}
 
         {/* Provider Info */}
         {showProvider && service.providerId && viewMode !== 'list' && (
-          <div className="flex items-center space-x-2 mb-2">
+          <div className="flex items-center space-x-2 mb-1.5">
             <img
               src={service.providerId.profilePic || 'https://via.placeholder.com/32'}
               alt={service.providerId.name}
@@ -130,8 +130,8 @@ const ServiceCard = ({ service, showProvider = true, viewMode = 'grid' }) => {
 
         {/* Footer */}
         <div className={`flex items-center ${
-          viewMode === 'list' ? 'justify-between flex-wrap gap-1' : 'justify-between pt-2 border-t'
-        } ${viewMode === 'list' ? '' : 'pt-2 border-t'}`}>
+          viewMode === 'list' ? 'justify-between flex-wrap gap-1' : 'justify-between pt-1.5 border-t'
+        } ${viewMode === 'list' ? '' : 'pt-1.5 border-t'}`}>
           {/* Price */}
           <div>
             <span className={`font-bold text-primary-600 ${
@@ -173,7 +173,7 @@ const ServiceCard = ({ service, showProvider = true, viewMode = 'grid' }) => {
 
         {/* Location */}
         {viewMode !== 'list' && (
-          <div className="flex items-center text-sm text-gray-500 mt-1">
+          <div className="flex items-center text-sm text-gray-500 mt-0.5">
             <FiMapPin size={14} className="mr-1" />
             {service.location?.city}, {service.location?.state}
           </div>

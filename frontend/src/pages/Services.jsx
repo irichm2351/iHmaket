@@ -246,8 +246,8 @@ const Services = () => {
 
               <div className={
                 viewMode === 'list'
-                  ? 'space-y-3'
-                  : 'grid grid-cols-2 lg:grid-cols-4 gap-3'
+                  ? 'space-y-2'
+                  : 'grid grid-cols-2 lg:grid-cols-4 gap-2'
               }>
                 {services.map((service) => (
                   <div key={service._id} className={viewMode === 'list' ? 'h-32' : ''}>
