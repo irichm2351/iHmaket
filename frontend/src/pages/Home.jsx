@@ -76,41 +76,39 @@ const Home = () => {
               Connect with professionals for all your service needs
             </p>
 
-            {/* State Filter Bar */}
-            <div className="max-w-4xl mx-auto mb-4">
-              <select
-                value={selectedState}
-                onChange={(e) => setSelectedState(e.target.value)}
-                className="w-full px-4 py-4 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary-300 bg-white"
-              >
-                <option value="">All States</option>
-                {Object.keys(nigeriaData).sort().map((state) => (
-                  <option key={state} value={state}>
-                    {state}
-                  </option>
-                ))}
-              </select>
-            </div>
+            {/* State Filter and Search Bar */}
+            <form onSubmit={handleSearch} className="max-w-5xl mx-auto">
+              <div className="flex gap-2 flex-wrap sm:flex-nowrap">
+                {/* State Dropdown */}
+                <select
+                  value={selectedState}
+                  onChange={(e) => setSelectedState(e.target.value)}
+                  className="px-3 py-4 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary-300 bg-white text-sm sm:text-base w-full sm:w-auto min-w-[120px]"
+                >
+                  <option value="">All States</option>
+                  {Object.keys(nigeriaData).sort().map((state) => (
+                    <option key={state} value={state}>
+                      {state}
+                    </option>
+                  ))}
+                </select>
 
-            {/* Search Bar */}
-            <form onSubmit={handleSearch} className="max-w-4xl mx-auto">
-              <div className="flex flex-col sm:flex-row gap-3">
-                {/* Search Input */}
-                <div className="flex-1 relative">
+                {/* Search Bar */}
+                <div className="flex-1 relative min-w-0">
                   <FiSearch className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
                   <input
                     type="text"
                     placeholder="Search for services..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full pl-12 pr-4 py-4 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary-300"
+                    className="w-full pl-12 pr-4 py-4 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary-300 text-sm sm:text-base"
                   />
                 </div>
 
                 {/* Search Button */}
                 <button
                   type="submit"
-                  className="btn bg-white text-primary-600 hover:bg-gray-100 px-8 py-4"
+                  className="btn bg-white text-primary-600 hover:bg-gray-100 px-6 sm:px-8 py-4 text-sm sm:text-base whitespace-nowrap"
                 >
                   Search
                 </button>
