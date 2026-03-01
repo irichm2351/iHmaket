@@ -30,6 +30,9 @@ const ServiceDetail = () => {
   });
 
   useEffect(() => {
+    // Scroll to top when page loads
+    window.scrollTo(0, 0);
+    
     // Redirect to login if not authenticated
     if (!isAuthenticated) {
       toast.error('Please login to view service details');

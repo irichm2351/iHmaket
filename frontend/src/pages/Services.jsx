@@ -60,6 +60,8 @@ const Services = () => {
       sort: searchParams.get('sort') || 'newest',
       page: parseInt(searchParams.get('page')) || 1,
     });
+    // Scroll to top when URL params change (e.g., clicking category)
+    window.scrollTo(0, 0);
   }, [searchParams]);
 
   useEffect(() => {

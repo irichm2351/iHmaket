@@ -19,6 +19,8 @@ const ProviderProfile = () => {
   const [viewingImage, setViewingImage] = useState(null);
 
   useEffect(() => {
+    // Scroll to top when page loads
+    window.scrollTo(0, 0);
     fetchProviderData();
   }, [id]);
 
