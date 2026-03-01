@@ -250,7 +250,7 @@ const Services = () => {
                   : 'grid grid-cols-2 lg:grid-cols-4 gap-2'
               }>
                 {services.map((service) => (
-                  <div key={service._id} className={viewMode === 'list' ? 'h-32' : ''}>
+                  <div key={service._id} className={viewMode === 'list' ? 'h-32' : 'h-full'}>
                     <ServiceCard service={service} viewMode={viewMode} />
                   </div>
                 ))}
