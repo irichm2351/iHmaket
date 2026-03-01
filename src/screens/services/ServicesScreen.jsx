@@ -13,7 +13,7 @@ import {
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useAuthStore } from '../../store/authStore';
-import api, { getImageUrl } from '../../utils/api';
+import api from '../../utils/api';
 
 const ServicesScreen = () => {
   const router = useRouter();
@@ -208,7 +208,7 @@ const ServicesScreen = () => {
               <View style={styles.serviceImage}>
                 {service.images && service.images.length > 0 ? (
                   <Image
-                    source={{ uri: getImageUrl(service.images[0]) }}
+                    source={{ uri: typeof service.images[0] === 'object' ? service.images[0].url : service.images[0] }}
                     style={styles.serviceImageContent}
                     resizeMode="cover"
                   />
@@ -233,7 +233,7 @@ const ServicesScreen = () => {
                 <View style={styles.providerRow}>
                   {service.provider?.profilePic && (
                     <Image
-                      source={{ uri: getImageUrl(service.provider.profilePic, 'https://via.placeholder.com/40') }}
+                      source={{ uri: service.provider.profilePic }}
                       style={styles.providerAvatar}
                     />
                   )}

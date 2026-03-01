@@ -13,7 +13,7 @@ import {
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { useAuthStore } from '../../store/authStore';
-import api, { getImageUrl } from '../../utils/api';
+import api from '../../utils/api';
 
 const DashboardScreen = () => {
   const router = useRouter();
@@ -198,7 +198,7 @@ const DashboardScreen = () => {
         >
           {user?.profilePic ? (
             <Image 
-              source={{ uri: getImageUrl(user.profilePic, 'https://via.placeholder.com/120') }} 
+              source={{ uri: user.profilePic }} 
               style={styles.profileImage}
             />
           ) : (
@@ -312,7 +312,7 @@ const DashboardScreen = () => {
                       <View style={styles.serviceImageContainer}>
                         {item.images && item.images.length > 0 ? (
                           <Image
-                            source={{ uri: getImageUrl(item.images[0]) }}
+                            source={{ uri: typeof item.images[0] === 'object' ? item.images[0].url : item.images[0] }}
                             style={styles.serviceImage}
                             resizeMode="cover"
                           />

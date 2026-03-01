@@ -15,7 +15,7 @@ import {
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import api, { getImageUrl } from '../../utils/api';
+import api from '../../utils/api';
 import { useAuthStore } from '../../store/authStore';
 
 const ProviderProfileScreen = ({ providerId }) => {
@@ -142,6 +142,15 @@ const ProviderProfileScreen = ({ providerId }) => {
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const getImageUrl = (url) => {
+    if (!url) return null;
+    if (url.startsWith('http')) return url;
+
+    const apiBase = process.env.EXPO_PUBLIC_API_URL || 'https://ihmaket-backend.onrender.com/api';
+    const baseUrl = apiBase.replace('/api', '');
+    return `${baseUrl}${url}`;
   };
 
   if (loading) {

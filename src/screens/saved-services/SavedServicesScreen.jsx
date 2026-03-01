@@ -13,7 +13,7 @@ import {
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { useAuthStore } from '../../store/authStore';
-import api, { getImageUrl } from '../../utils/api';
+import api from '../../utils/api';
 
 const SavedServicesScreen = () => {
   const router = useRouter();
@@ -108,6 +108,13 @@ const SavedServicesScreen = () => {
 
   const handleViewService = (serviceId) => {
     router.push(`/service/${serviceId}`);
+  };
+
+  const getImageUrl = (url) => {
+    if (!url) return null;
+    if (typeof url === 'object' && url.url) return url.url;
+    if (url.startsWith('http')) return url;
+    return url;
   };
 
   if (loading) {

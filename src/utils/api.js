@@ -3,7 +3,6 @@ import * as SecureStore from 'expo-secure-store';
 
 // Use production backend URL - can be overridden with EXPO_PUBLIC_API_URL environment variable
 const API_URL = process.env.EXPO_PUBLIC_API_URL || 'https://ihmaket-backend.onrender.com/api';
-const API_BASE_URL = API_URL.replace(/\/api\/?$/, '');
 
 console.log('=== API CONFIGURATION ===');
 console.log('API_URL:', API_URL);
@@ -66,32 +65,4 @@ api.interceptors.response.use(
 );
 
 export { API_URL };
-export const getImageUrl = (path, fallback = 'https://via.placeholder.com/400x300?text=No+Image') => {
-  if (!path) return fallback;
-
-  if (typeof path === 'object') {
-    if (path.url) return getImageUrl(path.url, fallback);
-    if (path.uri) return getImageUrl(path.uri, fallback);
-    return fallback;
-  }
-
-  const value = String(path).trim();
-  if (!value) return fallback;
-
-  const localhostMatch = value.match(/^https?:\/\/(localhost|127\.0\.0\.1|10\.0\.2\.2)(?::\d+)?(\/.*)$/i);
-  if (localhostMatch) {
-    return encodeURI(`${API_BASE_URL}${localhostMatch[2]}`);
-  }
-
-  if (/^https?:\/\//i.test(value)) {
-    return encodeURI(value);
-  }
-
-  if (value.startsWith('//')) {
-    return encodeURI(`https:${value}`);
-  }
-
-  const normalizedPath = value.startsWith('/') ? value : `/${value}`;
-  return encodeURI(`${API_BASE_URL}${normalizedPath}`);
-};
 export default api;

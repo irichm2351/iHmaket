@@ -2,7 +2,7 @@ import React, { useRef, useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, TextInput, Animated, ScrollView, Image, Modal, FlatList, ActivityIndicator } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter, useFocusEffect } from 'expo-router';
-import api, { getImageUrl } from '../../utils/api';
+import api from '../../utils/api';
 
 const HomeScreen = () => {
   const router = useRouter();
@@ -360,7 +360,7 @@ const HomeScreen = () => {
                 <View style={viewMode === 'grid' ? styles.featuredImage : styles.featuredImageList}>
                   {service.images && service.images.length > 0 ? (
                     <Image 
-                      source={{ uri: getImageUrl(service.images[0]) }} 
+                      source={{ uri: typeof service.images[0] === 'object' ? service.images[0].url : service.images[0] }} 
                       style={viewMode === 'grid' ? styles.featuredImageContent : styles.featuredImageContentList}
                       resizeMode="cover"
                     />
