@@ -39,7 +39,7 @@ const ServiceCard = ({ service, showProvider = true, viewMode = 'grid' }) => {
       <div className={`${
         viewMode === 'list'
           ? 'w-32 h-32 flex-shrink-0 overflow-hidden'
-          : 'relative overflow-hidden'
+          : 'relative'
       } bg-gray-200`}>
         <img
           src={getImageUrl(service.images?.[0]?.url)}
