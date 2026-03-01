@@ -44,10 +44,8 @@ const ServiceCard = ({ service, showProvider = true, viewMode = 'grid' }) => {
         <img
           src={getImageUrl(service.images?.[0]?.url)}
           alt={service.title}
-          className={`w-full h-full ${
-            viewMode === 'list'
-              ? 'object-cover'
-              : 'group-hover:scale-110 transition-transform duration-300'
+          className={`w-full h-full object-cover ${
+            viewMode !== 'list' ? 'group-hover:scale-110 transition-transform duration-300' : ''
           }`}
           onError={(e) => {
             e.target.src = 'https://via.placeholder.com/400x300?text=No+Image';
