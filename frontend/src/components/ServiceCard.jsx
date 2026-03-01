@@ -40,12 +40,12 @@ const ServiceCard = ({ service, showProvider = true, viewMode = 'grid' }) => {
         viewMode === 'list'
           ? 'w-32 h-32 flex-shrink-0'
           : 'relative h-48 overflow-hidden bg-gray-200'
-      } overflow-hidden bg-gray-200`}>
+      } flex items-center justify-center overflow-hidden bg-gray-200`}>
         <img
           src={getImageUrl(service.images?.[0]?.url)}
           alt={service.title}
-          className={`w-full h-full object-cover ${
-            viewMode !== 'list' ? 'group-hover:scale-110 transition-transform duration-300' : ''
+          className={`w-full h-full object-contain ${
+            viewMode !== 'list' ? 'group-hover:scale-105 transition-transform duration-300' : ''
           }`}
           onError={(e) => {
             e.target.src = 'https://via.placeholder.com/400x300?text=No+Image';
