@@ -129,29 +129,33 @@ const ServiceCard = ({ service, showProvider = true, viewMode = 'grid' }) => {
         )}
 
         {/* Footer */}
-        <div className={`flex items-center ${
-          viewMode === 'list' ? 'justify-between flex-wrap gap-1' : 'justify-between pt-1.5 border-t'
-        } ${viewMode === 'list' ? '' : 'pt-1.5 border-t'}`}>
-          {/* Price */}
-          <div>
+        <div className={`flex items-start justify-between flex-wrap gap-2 ${
+          viewMode === 'list' ? '' : 'pt-2 border-t'
+        }`}>
+          {/* Price Section */}
+          <div className="flex flex-col">
             <span className={`font-bold text-primary-600 ${
-              viewMode === 'list' ? 'text-lg' : 'text-2xl'
+              viewMode === 'list' ? 'text-lg' : 'text-xl'
             }`}>
               ₦{service.price?.amount?.toLocaleString()}
             </span>
             {service.price?.negotiable && (
-              <span className="text-xs text-gray-500 ml-1">(Negotiable)</span>
+              <span className="inline-block px-2 py-0.5 bg-amber-100 text-amber-700 text-xs font-semibold rounded mt-0.5 w-fit">
+                Negotiable
+              </span>
             )}
           </div>
 
-          {/* Rating */}
-          <div className="flex items-center space-x-1">
-            <FiStar className="text-yellow-400 fill-yellow-400" size={viewMode === 'list' ? 16 : 20} />
-            <span className="text-sm font-medium">
-              {service.rating?.toFixed(1) || '0.0'}
-            </span>
+          {/* Rating Section */}
+          <div className="flex flex-col items-end">
+            <div className="flex items-center space-x-1">
+              <FiStar className="text-yellow-400 fill-yellow-400" size={viewMode === 'list' ? 16 : 18} />
+              <span className="text-sm font-bold text-gray-900">
+                {service.rating?.toFixed(1) || '0.0'}
+              </span>
+            </div>
             <span className="text-xs text-gray-500">
-              ({service.totalReviews || 0})
+              ({service.totalReviews || 0} reviews)
             </span>
           </div>
 
