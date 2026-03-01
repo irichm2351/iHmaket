@@ -4,6 +4,7 @@ import { FiFilter, FiX, FiGrid, FiList } from 'react-icons/fi';
 import { serviceAPI } from '../utils/api';
 import ServiceCard from '../components/ServiceCard';
 import Loader from '../components/Loader';
+import { nigeriaData } from '../utils/nigeriaData';
 
 const categories = [
   'All',
@@ -39,6 +40,7 @@ const Services = () => {
   const [filters, setFilters] = useState({
     search: searchParams.get('search') || '',
     category: searchParams.get('category') || 'All',
+    state: searchParams.get('state') || '',
     city: searchParams.get('city') || '',
     minPrice: searchParams.get('minPrice') || '',
     maxPrice: searchParams.get('maxPrice') || '',
@@ -84,6 +86,7 @@ const Services = () => {
     const resetFilters = {
       search: '',
       category: 'All',
+      state: '',
       city: '',
       minPrice: '',
       maxPrice: '',
@@ -176,6 +179,23 @@ const Services = () => {
                 {categories.map((cat) => (
                   <option key={cat} value={cat}>
                     {cat}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* State */}
+            <div className="mb-4">
+              <label className="block text-sm font-medium mb-2">State</label>
+              <select
+                value={filters.state}
+                onChange={(e) => handleFilterChange('state', e.target.value)}
+                className="input text-sm"
+              >
+                <option value="">All States</option>
+                {Object.keys(nigeriaData).sort().map((state) => (
+                  <option key={state} value={state}>
+                    {state}
                   </option>
                 ))}
               </select>

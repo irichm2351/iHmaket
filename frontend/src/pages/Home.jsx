@@ -5,6 +5,7 @@ import { serviceAPI } from '../utils/api';
 import ServiceCard from '../components/ServiceCard';
 import Loader from '../components/Loader';
 import useAuthStore from '../store/authStore';
+import { nigeriaData } from '../utils/nigeriaData';
 
 const categories = [
   { name: 'Plumbing', icon: '🔧' },
@@ -21,6 +22,7 @@ const Home = () => {
   const navigate = useNavigate();
   const { isAuthenticated } = useAuthStore();
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedState, setSelectedState] = useState('');
   const [featuredServices, setFeaturedServices] = useState([]);
   const [loading, setLoading] = useState(true);
   const [viewMode, setViewMode] = useState(() => {
@@ -49,9 +51,16 @@ const Home = () => {
 
   const handleSearch = (e) => {
     e.preventDefault();
-    if (searchQuery.trim()) {
-      navigate(`/services?search=${searchQuery}`);
+    const params = new URLSearchParams();
+    
+    if (selectedState) {
+      params.append('state', selectedState);
     }
+    if (searchQuery.trim()) {
+      params.append('search', searchQuery);
+    }
+    
+    navigate(`/services?${params.toString()}`);
   };
 
   return (
@@ -66,6 +75,27 @@ const Home = () => {
             <p className="text-xl md:text-2xl mb-8 text-primary-100">
               Connect with professionals for all your service needs
             </p>
+
+            {/* State Filter Bar */}
+            <div className="max-w-3xl mx-auto mb-6">
+              <div className="bg-white rounded-lg p-4 shadow-lg">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Filter by State
+                </label>
+                <select
+                  value={selectedState}
+                  onChange={(e) => setSelectedState(e.target.value)}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary-600 focus:border-transparent"
+                >
+                  <option value="">All States</option>
+                  {Object.keys(nigeriaData).sort().map((state) => (
+                    <option key={state} value={state}>
+                      {state}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
 
             {/* Search Bar */}
             <form onSubmit={handleSearch} className="max-w-3xl mx-auto">
