@@ -76,24 +76,26 @@ const Home = () => {
               Connect with professionals for all your service needs
             </p>
 
-            {/* State Filter and Search Bar */}
+            {/* State Filter Bar */}
+            <div className="max-w-4xl mx-auto mb-4">
+              <select
+                value={selectedState}
+                onChange={(e) => setSelectedState(e.target.value)}
+                className="w-full px-4 py-4 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary-300 bg-white"
+              >
+                <option value="">All States</option>
+                {Object.keys(nigeriaData).sort().map((state) => (
+                  <option key={state} value={state}>
+                    {state}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Search Bar */}
             <form onSubmit={handleSearch} className="max-w-4xl mx-auto">
               <div className="flex flex-col sm:flex-row gap-3">
-                {/* State Dropdown */}
-                <select
-                  value={selectedState}
-                  onChange={(e) => setSelectedState(e.target.value)}
-                  className="px-4 py-4 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary-300 bg-white sm:w-auto"
-                >
-                  <option value="">All States</option>
-                  {Object.keys(nigeriaData).sort().map((state) => (
-                    <option key={state} value={state}>
-                      {state}
-                    </option>
-                  ))}
-                </select>
-
-                {/* Search Bar */}
+                {/* Search Input */}
                 <div className="flex-1 relative">
                   <FiSearch className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
                   <input
