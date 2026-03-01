@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -15,8 +15,8 @@ import {
   Platform,
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
-import api from '../../utils/api';
+import { useRouter, useFocusEffect } from 'expo-router';
+import api, { getImageUrl } from '../../utils/api';
 import { useAuthStore } from '../../store/authStore';
 import { NIGERIAN_STATES } from '../../utils/nigeriaData';
 
@@ -83,6 +83,15 @@ const ServiceDetailScreen = ({ route, serviceId }) => {
     }
   }, [id, user]);
 
+  // Refresh saved status when screen comes into focus
+  useFocusEffect(
+    useCallback(() => {
+      if (id && user) {
+        checkIfSaved();
+      }
+    }, [id, user])
+  );
+
   const fetchServiceDetails = async () => {
     try {
       setLoading(true);
@@ -112,7 +121,17 @@ const ServiceDetailScreen = ({ route, serviceId }) => {
     try {
       const response = await api.get(`/users/${user?._id}`);
       if (response.data.success && response.data.user?.savedServices) {
-        setIsSaved(response.data.user.savedServices.includes(id));
+        const savedServices = response.data.user.savedServices;
+        // Handle both populated objects and IDs
+        const isSavedService = savedServices.some(service => {
+          // If it's an object (populated), compare _id
+          if (typeof service === 'object' && service?._id) {
+            return service._id === id;
+          }
+          // If it's just an ID string
+          return service === id;
+        });
+        setIsSaved(isSavedService);
       }
     } catch (error) {
       console.error('Error checking saved status:', error);
@@ -123,10 +142,12 @@ const ServiceDetailScreen = ({ route, serviceId }) => {
     try {
       const response = await api.post(`/users/save-service/${id}`);
       if (response.data.success) {
-        setIsSaved(!isSaved);
+        // Use the saved status from the response
+        const newSavedStatus = response.data.saved;
+        setIsSaved(newSavedStatus);
         Alert.alert(
           'Success',
-          isSaved ? 'Removed from favorites' : 'Added to favorites'
+          newSavedStatus ? 'Added to favorites' : 'Removed from favorites'
         );
       }
     } catch (error) {
@@ -231,14 +252,6 @@ const ServiceDetailScreen = ({ route, serviceId }) => {
     }
 
     router.push(`/provider/${service.providerId._id}`);
-  };
-
-  const getImageUrl = (url) => {
-    if (!url) return null;
-    if (url.startsWith('http')) return url;
-    const apiBase = process.env.EXPO_PUBLIC_API_URL || 'https://ihmaket-backend.onrender.com/api';
-    const baseUrl = apiBase.replace('/api', '');
-    return `${baseUrl}${url}`;
   };
 
   const renderStars = (rating) => {

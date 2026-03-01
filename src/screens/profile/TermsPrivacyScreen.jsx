@@ -22,7 +22,7 @@ const TermsPrivacyScreen = () => {
     },
     {
       title: '4. Booking & Payment Terms',
-      content: 'All bookings are subject to provider acceptance. Payments are processed securely through our platform. Refund policies apply based on cancellation timing and provider terms.',
+      content: 'All bookings are subject to provider acceptance. Payments are NOT processed through our platform - all payment arrangements are made directly between customers and service providers. iHmaket does not handle, process, or hold any payments. Customers and providers agree on payment methods (cash, bank transfer, mobile money, etc.) through direct communication.',
     },
     {
       title: '5. Prohibited Activities',
@@ -34,7 +34,7 @@ const TermsPrivacyScreen = () => {
     },
     {
       title: '7. Liability & Disclaimers',
-      content: 'iHmaket acts as a marketplace platform. We are not liable for the quality of services provided by independent service providers.',
+      content: 'iHmaket acts as a marketplace platform connecting customers with service providers. We are not liable for the quality of services provided by independent service providers, nor are we responsible for payment disputes as all payments are handled directly between parties.',
     },
     {
       title: '8. Modifications to Terms',
@@ -45,15 +45,15 @@ const TermsPrivacyScreen = () => {
   const privacyContent = [
     {
       title: '1. Information We Collect',
-      content: 'We collect personal information (name, email, phone), profile data, booking history, payment information, and usage data to provide and improve our services.',
+      content: 'We collect personal information (name, email, phone), profile data, booking history, and usage data to provide and improve our services. We do NOT collect or store payment information as all payments are handled directly between customers and providers.',
     },
     {
       title: '2. How We Use Your Data',
-      content: 'Your data is used to facilitate bookings, process payments, communicate with you, improve our services, and ensure platform security.',
+      content: 'Your data is used to facilitate bookings, connect you with service providers, communicate with you, improve our services, and ensure platform security. We do not process payments - all payment arrangements are between you and your service provider.',
     },
     {
       title: '3. Data Sharing & Third Parties',
-      content: 'We share your data with service providers for bookings, payment processors for transactions, and may share anonymized data for analytics. We never sell your personal data.',
+      content: 'We share your contact information with service providers only when you initiate a booking or conversation. We may share anonymized data for analytics purposes. We never sell your personal data to third parties.',
     },
     {
       title: '4. Data Security',
@@ -61,7 +61,7 @@ const TermsPrivacyScreen = () => {
     },
     {
       title: '5. Your Privacy Rights',
-      content: 'You have the right to access, correct, delete, or export your personal data. Contact us at support@ihmaket.com to exercise your rights.',
+      content: 'You have the right to access, correct, delete, or export your personal data. Contact us at ihmaket2026@gmail.com to exercise your rights.',
     },
     {
       title: '6. Cookies & Tracking',
@@ -73,7 +73,7 @@ const TermsPrivacyScreen = () => {
     },
     {
       title: '8. Contact Us',
-      content: 'For privacy-related questions or concerns, contact us at support@ihmaket.com. We will respond within 7 business days.',
+      content: 'For privacy-related questions or concerns, contact us at ihmaket2026@gmail.com. We will respond within 7 business days.',
     },
   ];
 
@@ -136,7 +136,7 @@ const TermsPrivacyScreen = () => {
           <MaterialCommunityIcons name="email-outline" size={24} color="#3b82f6" />
           <Text style={styles.contactTitle}>Questions or Concerns?</Text>
           <Text style={styles.contactText}>
-            Contact us at support@ihmaket.com
+            Contact us at ihmaket2026@gmail.com
           </Text>
         </View>
       </ScrollView>

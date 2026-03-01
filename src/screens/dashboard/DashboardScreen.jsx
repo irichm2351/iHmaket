@@ -13,7 +13,7 @@ import {
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { useAuthStore } from '../../store/authStore';
-import api from '../../utils/api';
+import api, { getImageUrl } from '../../utils/api';
 
 const DashboardScreen = () => {
   const router = useRouter();
@@ -24,11 +24,16 @@ const DashboardScreen = () => {
   const [loadingServices, setLoadingServices] = useState(false);
   const [savedServices, setSavedServices] = useState([]);
   const [loadingSavedServices, setLoadingSavedServices] = useState(false);
+  const [subscriptionStatus, setSubscriptionStatus] = useState(null);
+  const [subscriptionLoading, setSubscriptionLoading] = useState(false);
 
   useEffect(() => {
     fetchDashboardStats();
     fetchMyServices();
     fetchSavedServices();
+    if (user?.role === 'provider') {
+      fetchSubscriptionStatus();
+    }
   }, []);
 
   // Refresh services when screen is focused
@@ -36,8 +41,25 @@ const DashboardScreen = () => {
     React.useCallback(() => {
       fetchMyServices();
       fetchSavedServices();
+      if (user?.role === 'provider') {
+        fetchSubscriptionStatus();
+      }
     }, [])
   );
+
+  const fetchSubscriptionStatus = async () => {
+    try {
+      setSubscriptionLoading(true);
+      const response = await api.get('/subscription/status');
+      if (response.data.success) {
+        setSubscriptionStatus(response.data.status);
+      }
+    } catch (error) {
+      console.error('Error fetching subscription status:', error);
+    } finally {
+      setSubscriptionLoading(false);
+    }
+  };
 
   const fetchDashboardStats = async () => {
     try {
@@ -78,6 +100,7 @@ const DashboardScreen = () => {
       setLoadingSavedServices(true);
       const response = await api.get(`/users/${user?._id}`);
       if (response.data.success && response.data.user?.savedServices) {
+        // Store the savedServices (works whether populated or not for count)
         setSavedServices(response.data.user.savedServices);
       }
     } catch (error) {
@@ -86,6 +109,35 @@ const DashboardScreen = () => {
     } finally {
       setLoadingSavedServices(false);
     }
+  };
+
+  const subscriptionBlocked =
+    subscriptionStatus?.enabled &&
+    subscriptionStatus?.isProvider &&
+    !subscriptionStatus?.isActive;
+
+  const getSubscriptionBadgeText = () => {
+    if (!subscriptionStatus?.isActive || !subscriptionStatus?.expiresAt) {
+      return null;
+    }
+    const expiryDate = new Date(subscriptionStatus.expiresAt).toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric'
+    });
+    return `Active until ${expiryDate}`;
+  };
+
+  const handleProviderAction = (path) => {
+    if (subscriptionBlocked) {
+      Alert.alert(
+        'Subscription Required',
+        'Provider features are blocked until you subscribe.'
+      );
+      router.push('/subscription');
+      return;
+    }
+    router.push(path);
   };
 
   const handleDeleteService = (serviceId, serviceTitle) => {
@@ -133,6 +185,12 @@ const DashboardScreen = () => {
               day: 'numeric',
             })}
           </Text>
+          {user?.role === 'provider' && subscriptionStatus?.isActive && (
+            <View style={styles.subscriptionBadge}>
+              <MaterialCommunityIcons name="check-decagram" size={14} color="#065f46" />
+              <Text style={styles.subscriptionBadgeText}>{getSubscriptionBadgeText()}</Text>
+            </View>
+          )}
         </View>
         <TouchableOpacity 
           style={styles.headerIcon}
@@ -140,7 +198,7 @@ const DashboardScreen = () => {
         >
           {user?.profilePic ? (
             <Image 
-              source={{ uri: user.profilePic }} 
+              source={{ uri: getImageUrl(user.profilePic, 'https://via.placeholder.com/120') }} 
               style={styles.profileImage}
             />
           ) : (
@@ -148,6 +206,23 @@ const DashboardScreen = () => {
           )}
         </TouchableOpacity>
       </View>
+
+      {user?.role === 'provider' && subscriptionBlocked && (
+        <View style={styles.subscriptionBanner}>
+          <View style={styles.subscriptionBannerText}>
+            <Text style={styles.subscriptionTitle}>Subscription Required</Text>
+            <Text style={styles.subscriptionText}>
+              Provider features are blocked until you subscribe.
+            </Text>
+          </View>
+          <TouchableOpacity
+            style={styles.subscriptionButton}
+            onPress={() => router.push('/subscription')}
+          >
+            <Text style={styles.subscriptionButtonText}>Subscribe</Text>
+          </TouchableOpacity>
+        </View>
+      )}
 
       {/* Stats Cards */}
       {loading ? (
@@ -198,7 +273,7 @@ const DashboardScreen = () => {
             <View style={styles.actionsSection}>
               <Text style={styles.sectionTitle}>Quick Actions</Text>
               <View style={styles.actionsGrid}>
-                <TouchableOpacity style={styles.actionCard} onPress={() => router.push('/post-service')}>
+                <TouchableOpacity style={styles.actionCard} onPress={() => handleProviderAction('/post-service')}>
                   <MaterialCommunityIcons name="plus-circle" size={28} color="#3b82f6" />
                   <Text style={styles.actionText}>Post Service</Text>
                 </TouchableOpacity>
@@ -219,7 +294,7 @@ const DashboardScreen = () => {
                   <Text style={styles.adsTitle}>My Service Ads</Text>
                   <Text style={styles.adsSubtitle}>Manage and monitor your posted services</Text>
                 </View>
-                <TouchableOpacity style={styles.adsButton} onPress={() => router.push('/post-service')}>
+                <TouchableOpacity style={styles.adsButton} onPress={() => handleProviderAction('/post-service')}>
                   <Text style={styles.adsButtonText}>New Service</Text>
                 </TouchableOpacity>
               </View>
@@ -237,7 +312,7 @@ const DashboardScreen = () => {
                       <View style={styles.serviceImageContainer}>
                         {item.images && item.images.length > 0 ? (
                           <Image
-                            source={{ uri: typeof item.images[0] === 'object' ? item.images[0].url : item.images[0] }}
+                            source={{ uri: getImageUrl(item.images[0]) }}
                             style={styles.serviceImage}
                             resizeMode="cover"
                           />
@@ -343,8 +418,9 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'flex-end',
     paddingHorizontal: 20,
+    paddingTop: 20,
     paddingBottom: 12,
-    height: 100,
+    height: 130,
     backgroundColor: 'white',
     borderBottomWidth: 1,
     borderBottomColor: '#e5e7eb',
@@ -613,6 +689,59 @@ const styles = StyleSheet.create({
     backgroundColor: '#f3f4f6',
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  subscriptionBanner: {
+    backgroundColor: '#fef3c7',
+    borderColor: '#f59e0b',
+    borderWidth: 1,
+    padding: 12,
+    borderRadius: 12,
+    marginHorizontal: 16,
+    marginBottom: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  subscriptionBannerText: {
+    flex: 1,
+    marginRight: 10,
+  },
+  subscriptionTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#92400e',
+    marginBottom: 4,
+  },
+  subscriptionText: {
+    fontSize: 12,
+    color: '#92400e',
+  },
+  subscriptionButton: {
+    backgroundColor: '#f59e0b',
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+  },
+  subscriptionButtonText: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  subscriptionBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#d1fae5',
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+    borderRadius: 999,
+    alignSelf: 'flex-start',
+    marginTop: 6,
+    gap: 4,
+  },
+  subscriptionBadgeText: {
+    color: '#065f46',
+    fontSize: 11,
+    fontWeight: '700',
   },
 });
 

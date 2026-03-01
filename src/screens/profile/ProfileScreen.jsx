@@ -119,35 +119,6 @@ const ProfileScreen = () => {
     }
   };
 
-  const testBackendConnection = async () => {
-    try {
-      console.log('\n=== TESTING BACKEND CONNECTION ===');
-      console.log('API URL:', api.defaults.baseURL);
-      
-      // Get token from secure store
-      const token = await require('expo-secure-store').getItemAsync('authToken');
-      console.log('Auth token present:', !!token);
-      console.log('User ID:', user?.id);
-      
-      // Test simple GET request to health endpoint
-      const response = await api.get('/health');
-      console.log('Health check response:', response.data);
-      
-      Alert.alert('✅ Backend Connected', 'Backend is reachable and responding correctly!');
-    } catch (error) {
-      console.error('=== CONNECTION TEST ERROR ===');
-      console.error('Error:', error.message);
-      console.error('Status:', error.response?.status);
-      console.error('Data:', error.response?.data);
-      
-      Alert.alert('❌ Connection Error', 
-        `Cannot reach backend: ${error.message}\n\n` +
-        `Status: ${error.response?.status || 'N/A'}\n` +
-        `Check: Is backend running? Is URL correct?`
-      );
-    }
-  };
-
   const handleLogout = async () => {
     await logout();
     router.replace('/(auth)/login');
@@ -222,14 +193,28 @@ const ProfileScreen = () => {
           <MaterialCommunityIcons name="chevron-right" size={20} color="#d1d5db" />
         </TouchableOpacity>
 
+        {user?.role === 'provider' && (
+          <TouchableOpacity
+            style={styles.optionItem}
+            onPress={() => router.push('/subscription')}
+          >
+            <MaterialCommunityIcons name="credit-card" size={20} color="#3b82f6" />
+            <View style={styles.optionContent}>
+              <Text style={styles.optionTitle}>Subscription</Text>
+              <Text style={styles.optionDesc}>Manage your plan</Text>
+            </View>
+            <MaterialCommunityIcons name="chevron-right" size={20} color="#d1d5db" />
+          </TouchableOpacity>
+        )}
+
         <TouchableOpacity 
           style={styles.optionItem} 
           onPress={() => router.push('/profile/help-support')}
         >
-          <MaterialCommunityIcons name="help-circle" size={20} color="#3b82f6" />
+          <MaterialCommunityIcons name="frequently-asked-questions" size={20} color="#3b82f6" />
           <View style={styles.optionContent}>
-            <Text style={styles.optionTitle}>Help & Support</Text>
-            <Text style={styles.optionDesc}>Get help</Text>
+            <Text style={styles.optionTitle}>FAQs</Text>
+            <Text style={styles.optionDesc}>Learn about the app</Text>
           </View>
           <MaterialCommunityIcons name="chevron-right" size={20} color="#d1d5db" />
         </TouchableOpacity>
@@ -246,17 +231,6 @@ const ProfileScreen = () => {
           <MaterialCommunityIcons name="chevron-right" size={20} color="#d1d5db" />
         </TouchableOpacity>
 
-        <TouchableOpacity 
-          style={[styles.optionItem, {backgroundColor: '#eff6ff', borderLeftWidth: 3, borderLeftColor: '#3b82f6'}]}
-          onPress={testBackendConnection}
-        >
-          <MaterialCommunityIcons name="wifi" size={20} color="#0284c7" />
-          <View style={styles.optionContent}>
-            <Text style={styles.optionTitle}>Test Backend Connection</Text>
-            <Text style={styles.optionDesc}>Verify API is reachable</Text>
-          </View>
-          <MaterialCommunityIcons name="chevron-right" size={20} color="#0284c7" />
-        </TouchableOpacity>
       </View>
 
       {/* Logout Button */}

@@ -13,7 +13,7 @@ import {
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useAuthStore } from '../../store/authStore';
-import api from '../../utils/api';
+import api, { getImageUrl } from '../../utils/api';
 
 const ServicesScreen = () => {
   const router = useRouter();
@@ -59,7 +59,12 @@ const ServicesScreen = () => {
     try {
       const response = await api.get(`/users/${user?._id}`);
       if (response.data.success && response.data.user?.savedServices) {
-        setSavedServices(response.data.user.savedServices);
+        const savedServicesData = response.data.user.savedServices;
+        // Extract IDs whether they're objects or strings
+        const savedIds = savedServicesData.map(service => 
+          typeof service === 'object' && service?._id ? service._id : service
+        );
+        setSavedServices(savedIds);
       }
     } catch (error) {
       console.error('Error fetching saved services:', error);
@@ -74,11 +79,11 @@ const ServicesScreen = () => {
     try {
       const response = await api.post(`/users/save-service/${serviceId}`);
       if (response.data.success) {
-        // Update local saved services state
-        if (savedServices.includes(serviceId)) {
-          setSavedServices(savedServices.filter(id => id !== serviceId));
-        } else {
+        // Update local saved services state based on server response
+        if (response.data.saved) {
           setSavedServices([...savedServices, serviceId]);
+        } else {
+          setSavedServices(savedServices.filter(id => id !== serviceId));
         }
       }
     } catch (error) {
@@ -203,7 +208,7 @@ const ServicesScreen = () => {
               <View style={styles.serviceImage}>
                 {service.images && service.images.length > 0 ? (
                   <Image
-                    source={{ uri: typeof service.images[0] === 'object' ? service.images[0].url : service.images[0] }}
+                    source={{ uri: getImageUrl(service.images[0]) }}
                     style={styles.serviceImageContent}
                     resizeMode="cover"
                   />
@@ -228,7 +233,7 @@ const ServicesScreen = () => {
                 <View style={styles.providerRow}>
                   {service.provider?.profilePic && (
                     <Image
-                      source={{ uri: service.provider.profilePic }}
+                      source={{ uri: getImageUrl(service.provider.profilePic, 'https://via.placeholder.com/40') }}
                       style={styles.providerAvatar}
                     />
                   )}

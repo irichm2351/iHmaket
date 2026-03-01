@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -11,9 +11,9 @@ import {
   RefreshControl,
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router';
 import { useAuthStore } from '../../store/authStore';
-import api from '../../utils/api';
+import api, { getImageUrl } from '../../utils/api';
 
 const SavedServicesScreen = () => {
   const router = useRouter();
@@ -26,31 +26,46 @@ const SavedServicesScreen = () => {
     fetchSavedServices();
   }, []);
 
+  // Refresh saved services when screen comes into focus
+  useFocusEffect(
+    useCallback(() => {
+      fetchSavedServices();
+    }, [])
+  );
+
   const fetchSavedServices = async () => {
     try {
       setLoading(true);
-      // Get user's saved service IDs
+      
+      // Get user's saved service data (already populated by backend)
       const userResponse = await api.get(`/users/${user?._id}`);
-      const savedServiceIds = userResponse.data.user?.savedServices || [];
-
-      if (savedServiceIds.length === 0) {
+      const savedServicesData = userResponse.data.user?.savedServices || [];
+      
+      if (savedServicesData.length === 0) {
         setSavedServices([]);
         setLoading(false);
+        setRefreshing(false);
         return;
       }
-
-      // Fetch all services and filter by saved IDs
-      const servicesResponse = await api.get('/services');
-      const allServices = servicesResponse.data.services || [];
       
-      // Filter to only show saved services
-      const filtered = allServices.filter(service => 
-        savedServiceIds.includes(service._id)
-      );
-      
-      setSavedServices(filtered);
+      // If savedServices are already populated objects, use them directly
+      if (savedServicesData[0] && typeof savedServicesData[0] === 'object' && savedServicesData[0]._id) {
+        // Filter out any null values
+        const validServices = savedServicesData.filter(service => service && service._id);
+        setSavedServices(validServices);
+      } else {
+        // If they're just IDs, fetch the full service details
+        const savedServiceIds = savedServicesData;
+        const servicesResponse = await api.get('/services');
+        const allServices = servicesResponse.data.services || [];
+        const filtered = allServices.filter(service => 
+          savedServiceIds.includes(service._id)
+        );
+        setSavedServices(filtered);
+      }
     } catch (error) {
       console.error('Error fetching saved services:', error);
+      console.error('Error details:', error.response?.data || error.message);
       Alert.alert('Error', 'Failed to load saved services');
     } finally {
       setLoading(false);
@@ -93,13 +108,6 @@ const SavedServicesScreen = () => {
 
   const handleViewService = (serviceId) => {
     router.push(`/service/${serviceId}`);
-  };
-
-  const getImageUrl = (url) => {
-    if (!url) return null;
-    if (typeof url === 'object' && url.url) return url.url;
-    if (url.startsWith('http')) return url;
-    return url;
   };
 
   if (loading) {

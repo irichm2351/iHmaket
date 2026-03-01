@@ -192,6 +192,12 @@ const PostServiceScreen = () => {
       console.error('Post Error:', error);
       if (error.code === 'ECONNABORTED') {
         setMessage('Upload timeout. Please check your connection.');
+      } else if (error.response?.status === 402) {
+        Alert.alert(
+          'Subscription Required',
+          error.response.data?.message || 'Please subscribe to post services.'
+        );
+        router.push('/subscription');
       } else if (error.response) {
         setMessage(error.response.data?.message || 'Server error. Please try again.');
       } else if (error.request) {
