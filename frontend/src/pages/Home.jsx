@@ -77,13 +77,13 @@ const Home = () => {
             </p>
 
             {/* State Filter and Search Bar */}
-            <form onSubmit={handleSearch} className="max-w-5xl mx-auto">
-              <div className="flex gap-2 flex-wrap sm:flex-nowrap">
+            <form onSubmit={handleSearch} className="max-w-5xl mx-auto px-2">
+              <div className="flex gap-2 flex-nowrap">
                 {/* State Dropdown */}
                 <select
                   value={selectedState}
                   onChange={(e) => setSelectedState(e.target.value)}
-                  className="px-3 py-4 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary-300 bg-white text-sm sm:text-base w-full sm:w-auto min-w-[120px]"
+                  className="px-2 py-4 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary-300 bg-white text-xs sm:text-sm flex-shrink-0"
                 >
                   <option value="">All States</option>
                   {Object.keys(nigeriaData).sort().map((state) => (
@@ -95,20 +95,20 @@ const Home = () => {
 
                 {/* Search Bar */}
                 <div className="flex-1 relative min-w-0">
-                  <FiSearch className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+                  <FiSearch className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
                   <input
                     type="text"
-                    placeholder="Search for services..."
+                    placeholder="Search..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full pl-12 pr-4 py-4 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary-300 text-sm sm:text-base"
+                    className="w-full pl-12 pr-4 py-4 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary-300 text-xs sm:text-base"
                   />
                 </div>
 
                 {/* Search Button */}
                 <button
                   type="submit"
-                  className="btn bg-white text-primary-600 hover:bg-gray-100 px-6 sm:px-8 py-4 text-sm sm:text-base whitespace-nowrap"
+                  className="btn bg-white text-primary-600 hover:bg-gray-100 px-3 sm:px-8 py-4 text-xs sm:text-base whitespace-nowrap flex-shrink-0"
                 >
                   Search
                 </button>
