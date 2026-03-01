@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { FiFilter, FiX } from 'react-icons/fi';
+import { FiFilter, FiX, FiGrid3X3, FiList } from 'react-icons/fi';
 import { serviceAPI } from '../utils/api';
 import ServiceCard from '../components/ServiceCard';
 import Loader from '../components/Loader';
@@ -31,6 +31,10 @@ const Services = () => {
   const [loading, setLoading] = useState(true);
   const [pagination, setPagination] = useState({});
   const [showFilters, setShowFilters] = useState(false);
+  const [viewMode, setViewMode] = useState(() => {
+    // Load view mode from localStorage or default to 'grid'
+    return localStorage.getItem('serviceViewMode') || 'grid';
+  });
 
   const [filters, setFilters] = useState({
     search: searchParams.get('search') || '',
@@ -90,18 +94,49 @@ const Services = () => {
     setSearchParams({});
   };
 
+  const handleViewModeChange = (mode) => {
+    setViewMode(mode);
+    localStorage.setItem('serviceViewMode', mode);
+  };
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {/* Header */}
-      <div className="flex justify-between items-center mb-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
         <h1 className="text-3xl font-bold">Browse Services</h1>
-        <button
-          onClick={() => setShowFilters(!showFilters)}
-          className="md:hidden btn btn-secondary flex items-center"
-        >
-          <FiFilter className="mr-2" />
-          Filters
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => handleViewModeChange('grid')}
+            className={`p-2 rounded-lg transition ${
+              viewMode === 'grid'
+                ? 'bg-primary-600 text-white'
+                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+            }`}
+            title="Grid view"
+            aria-label="Grid view"
+          >
+            <FiGrid3X3 size={20} />
+          </button>
+          <button
+            onClick={() => handleViewModeChange('list')}
+            className={`p-2 rounded-lg transition ${
+              viewMode === 'list'
+                ? 'bg-primary-600 text-white'
+                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+            }`}
+            title="List view"
+            aria-label="List view"
+          >
+            <FiList size={20} />
+          </button>
+          <button
+            onClick={() => setShowFilters(!showFilters)}
+            className="md:hidden btn btn-secondary flex items-center"
+          >
+            <FiFilter className="mr-2" />
+            Filters
+          </button>
+        </div>
       </div>
 
       <div className="flex flex-col md:flex-row gap-6">
@@ -209,9 +244,15 @@ const Services = () => {
                 Showing {services.length} of {pagination.total} services
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className={
+                viewMode === 'list'
+                  ? 'space-y-4'
+                  : 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6'
+              }>
                 {services.map((service) => (
-                  <ServiceCard key={service._id} service={service} />
+                  <div key={service._id} className={viewMode === 'list' ? 'h-32' : ''}>
+                    <ServiceCard service={service} viewMode={viewMode} />
+                  </div>
                 ))}
               </div>
 

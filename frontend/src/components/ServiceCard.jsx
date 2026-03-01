@@ -5,7 +5,7 @@ import { userAPI, getImageUrl } from '../utils/api';
 import toast from 'react-hot-toast';
 import useAuthStore from '../store/authStore';
 
-const ServiceCard = ({ service, showProvider = true }) => {
+const ServiceCard = ({ service, showProvider = true, viewMode = 'grid' }) => {
   const { isAuthenticated } = useAuthStore();
   const [isSaved, setIsSaved] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -32,39 +32,53 @@ const ServiceCard = ({ service, showProvider = true }) => {
   };
 
   return (
-    <Link to={`/services/${service._id}`} className="card overflow-hidden group block">
+    <Link to={`/services/${service._id}`} className={`card overflow-hidden group block ${
+      viewMode === 'list' ? 'flex' : ''
+    }`}>
       {/* Image */}
-      <div className="relative h-48 overflow-hidden bg-gray-200">
+      <div className={`${
+        viewMode === 'list'
+          ? 'w-32 h-32 flex-shrink-0'
+          : 'relative h-48 overflow-hidden bg-gray-200'
+      } overflow-hidden bg-gray-200`}>
         <img
           src={getImageUrl(service.images?.[0]?.url)}
           alt={service.title}
-          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+          className={`w-full h-full ${
+            viewMode === 'list'
+              ? 'object-cover'
+              : 'group-hover:scale-110 transition-transform duration-300'
+          }`}
           onError={(e) => {
             e.target.src = 'https://via.placeholder.com/400x300?text=No+Image';
           }}
         />
         
         {/* Save Button */}
-        <button
-          onClick={handleSave}
-          disabled={saving}
-          className="absolute top-3 right-3 p-2 bg-white rounded-full shadow-md hover:bg-gray-100 transition"
-        >
-          <FiHeart
-            size={20}
-            className={isSaved ? 'fill-red-500 text-red-500' : 'text-gray-600'}
-          />
-        </button>
+        {viewMode !== 'list' && (
+          <button
+            onClick={handleSave}
+            disabled={saving}
+            className="absolute top-3 right-3 p-2 bg-white rounded-full shadow-md hover:bg-gray-100 transition"
+          >
+            <FiHeart
+              size={20}
+              className={isSaved ? 'fill-red-500 text-red-500' : 'text-gray-600'}
+            />
+          </button>
+        )}
 
         {/* Featured Badge */}
         {service.isFeatured && (
-          <span className="absolute top-3 left-3 bg-yellow-400 text-gray-900 px-3 py-1 rounded-full text-xs font-semibold">
+          <span className={`absolute ${
+            viewMode === 'list' ? 'top-1 left-1' : 'top-3 left-3'
+          } bg-yellow-400 text-gray-900 px-2 py-0.5 rounded-full text-xs font-semibold`}>
             Featured
           </span>
         )}
 
         {/* Image Count */}
-        {service.images?.length > 1 && (
+        {service.images?.length > 1 && viewMode !== 'list' && (
           <span className="absolute bottom-3 left-3 bg-black bg-opacity-60 text-white px-2 py-1 rounded-full text-xs font-semibold">
             {service.images.length} images
           </span>
@@ -72,24 +86,28 @@ const ServiceCard = ({ service, showProvider = true }) => {
       </div>
 
       {/* Content */}
-      <div className="p-4">
+      <div className={`${viewMode === 'list' ? 'flex-1' : ''} p-4`}>
         {/* Category */}
         <span className="inline-block px-3 py-1 bg-primary-100 text-primary-700 text-xs font-medium rounded-full mb-2">
           {service.category}
         </span>
 
         {/* Title */}
-        <h3 className="text-lg font-semibold text-gray-900 mb-2 line-clamp-2">
+        <h3 className={`font-semibold text-gray-900 mb-2 ${
+          viewMode === 'list' ? 'text-base line-clamp-1' : 'text-lg line-clamp-2'
+        }`}>
           {service.title}
         </h3>
 
         {/* Description */}
-        <p className="text-sm text-gray-600 mb-3 line-clamp-2">
-          {service.description}
-        </p>
+        {viewMode !== 'list' && (
+          <p className="text-sm text-gray-600 mb-3 line-clamp-2">
+            {service.description}
+          </p>
+        )}
 
         {/* Provider Info */}
-        {showProvider && service.providerId && (
+        {showProvider && service.providerId && viewMode !== 'list' && (
           <div className="flex items-center space-x-2 mb-3">
             <img
               src={service.providerId.profilePic || 'https://via.placeholder.com/32'}
@@ -111,10 +129,14 @@ const ServiceCard = ({ service, showProvider = true }) => {
         )}
 
         {/* Footer */}
-        <div className="flex items-center justify-between pt-3 border-t">
+        <div className={`flex items-center ${
+          viewMode === 'list' ? 'justify-between flex-wrap gap-1' : 'justify-between pt-3 border-t'
+        } ${viewMode === 'list' ? '' : 'pt-3 border-t'}`}>
           {/* Price */}
           <div>
-            <span className="text-2xl font-bold text-primary-600">
+            <span className={`font-bold text-primary-600 ${
+              viewMode === 'list' ? 'text-lg' : 'text-2xl'
+            }`}>
               ₦{service.price?.amount?.toLocaleString()}
             </span>
             {service.price?.negotiable && (
@@ -124,7 +146,7 @@ const ServiceCard = ({ service, showProvider = true }) => {
 
           {/* Rating */}
           <div className="flex items-center space-x-1">
-            <FiStar className="text-yellow-400 fill-yellow-400" />
+            <FiStar className="text-yellow-400 fill-yellow-400" size={viewMode === 'list' ? 16 : 20} />
             <span className="text-sm font-medium">
               {service.rating?.toFixed(1) || '0.0'}
             </span>
@@ -132,13 +154,30 @@ const ServiceCard = ({ service, showProvider = true }) => {
               ({service.totalReviews || 0})
             </span>
           </div>
+
+          {/* Save Button for List View */}
+          {viewMode === 'list' && (
+            <button
+              onClick={handleSave}
+              disabled={saving}
+              className="p-1 text-gray-600 hover:text-red-500 transition"
+              title="Save service"
+            >
+              <FiHeart
+                size={18}
+                className={isSaved ? 'fill-red-500 text-red-500' : ''}
+              />
+            </button>
+          )}
         </div>
 
         {/* Location */}
-        <div className="flex items-center text-sm text-gray-500 mt-2">
-          <FiMapPin size={14} className="mr-1" />
-          {service.location?.city}, {service.location?.state}
-        </div>
+        {viewMode !== 'list' && (
+          <div className="flex items-center text-sm text-gray-500 mt-2">
+            <FiMapPin size={14} className="mr-1" />
+            {service.location?.city}, {service.location?.state}
+          </div>
+        )}
       </div>
 
       {/* Image Viewer Modal */}
