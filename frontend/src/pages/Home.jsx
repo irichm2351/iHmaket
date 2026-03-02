@@ -144,14 +144,14 @@ const Home = () => {
       </section>
 
       {/* Featured Services */}
-      <section className="py-16">
+      <section className="py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center mb-12">
             <h2 className="text-2xl font-bold">Featured Services</h2>
             <div className="flex items-center gap-2">
               <button
                 onClick={() => handleViewModeChange('grid')}
-                className={`p-2 rounded-lg transition ${
+                className={`p-1.5 rounded-lg transition ${
                   viewMode === 'grid'
                     ? 'bg-primary-600 text-white'
                     : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
@@ -159,11 +159,11 @@ const Home = () => {
                 title="Grid view"
                 aria-label="Grid view"
               >
-                <FiGrid size={20} />
+                <FiGrid size={16} />
               </button>
               <button
                 onClick={() => handleViewModeChange('list')}
-                className={`p-2 rounded-lg transition ${
+                className={`p-1.5 rounded-lg transition ${
                   viewMode === 'list'
                     ? 'bg-primary-600 text-white'
                     : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
@@ -171,7 +171,7 @@ const Home = () => {
                 title="List view"
                 aria-label="List view"
               >
-                <FiList size={20} />
+                <FiList size={16} />
               </button>
             </div>
           </div>
