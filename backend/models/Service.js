@@ -31,6 +31,7 @@ const serviceSchema = new mongoose.Schema({
       'Moving & Delivery',
       'Event Planning',
       'Health & Fitness',
+      'Fashion & Tailoring',
       'Other'
     ]
   },
