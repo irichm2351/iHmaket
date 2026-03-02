@@ -46,11 +46,30 @@ const AdminDashboard = () => {
     }));
   };
 
-  // Mark users as viewed when admin leaves the page
+  // Mark users as viewed after admin has been on page for a few seconds
   useEffect(() => {
-    return () => {
-      // Cleanup: mark users as viewed when component unmounts
+    // Auto-mark users as viewed after 3 seconds of being on the page
+    const timer = setTimeout(() => {
       markUsersAsViewed();
+    }, 3000);
+    
+    // Also mark when leaving the page
+    const handleBeforeUnload = () => {
+      // Use synchronous approach for more reliability
+      const token = getAuthToken();
+      if (navigator.sendBeacon) {
+        const url = `${API_URL}/admin/users/mark-viewed`;
+        const formData = new FormData();
+        formData.append('token', token);
+        navigator.sendBeacon(url, formData);
+      }
+    };
+    
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener('beforeunload', handleBeforeUnload);
     };
   }, []);
 
