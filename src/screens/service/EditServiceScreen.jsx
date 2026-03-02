@@ -40,13 +40,22 @@ const EditServiceScreen = () => {
 
   const categories = [
     { id: 1, label: 'Plumbing', value: 'Plumbing' },
-    { id: 2, label: 'Cleaning', value: 'Cleaning' },
-    { id: 3, label: 'Beauty & Makeup', value: 'Beauty & Makeup' },
-    { id: 4, label: 'IT & Tech Support', value: 'IT & Tech Support' },
-    { id: 5, label: 'Photography', value: 'Photography' },
-    { id: 6, label: 'Catering', value: 'Catering' },
-    { id: 7, label: 'Tutoring', value: 'Tutoring' },
-    { id: 8, label: 'Home Repair', value: 'Home Repair' },
+    { id: 2, label: 'Electrical', value: 'Electrical' },
+    { id: 3, label: 'Cleaning', value: 'Cleaning' },
+    { id: 4, label: 'Carpentry', value: 'Carpentry' },
+    { id: 5, label: 'Painting', value: 'Painting' },
+    { id: 6, label: 'Beauty & Makeup', value: 'Beauty & Makeup' },
+    { id: 7, label: 'Catering', value: 'Catering' },
+    { id: 8, label: 'Photography', value: 'Photography' },
+    { id: 9, label: 'Tutoring', value: 'Tutoring' },
+    { id: 10, label: 'IT & Tech Support', value: 'IT & Tech Support' },
+    { id: 11, label: 'Home Repair', value: 'Home Repair' },
+    { id: 12, label: 'Gardening', value: 'Gardening' },
+    { id: 13, label: 'Moving & Delivery', value: 'Moving & Delivery' },
+    { id: 14, label: 'Event Planning', value: 'Event Planning' },
+    { id: 15, label: 'Health & Fitness', value: 'Health & Fitness' },
+    { id: 16, label: 'Fashion & Tailoring', value: 'Fashion & Tailoring' },
+    { id: 17, label: 'Other', value: 'Other' },
   ];
 
   const nigeriaStates = [
