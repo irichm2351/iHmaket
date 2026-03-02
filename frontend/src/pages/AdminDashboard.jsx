@@ -69,8 +69,21 @@ const AdminDashboard = () => {
     const timer = setTimeout(async () => {
       try {
         setMarkingNewUsers(true);
-        await markUsersAsViewed();
-        await Promise.all([fetchUsers(), fetchStats()]);
+
+        // Optimistically clear NEW badges in UI immediately after admin sees them
+        setUsers((prevUsers) =>
+          prevUsers.map((user) =>
+            user.isNewUser ? { ...user, isNewUser: false } : user
+          )
+        );
+        setStats((prevStats) => ({ ...prevStats, newUsers: 0 }));
+
+        const success = await markUsersAsViewed();
+
+        // If backend update fails, resync data from server
+        if (!success) {
+          await Promise.all([fetchUsers(), fetchStats()]);
+        }
       } finally {
         setMarkingNewUsers(false);
       }
@@ -98,15 +111,23 @@ const AdminDashboard = () => {
   const markUsersAsViewed = async () => {
     try {
       const token = getAuthToken();
-      await fetch(
+      const response = await fetch(
         `${API_URL}/admin/users/mark-viewed`,
         {
           method: 'PUT',
           headers: { Authorization: `Bearer ${token}` }
         }
       );
+
+      if (!response.ok) {
+        return false;
+      }
+
+      const data = await response.json();
+      return Boolean(data?.success);
     } catch (error) {
       console.error('Error marking users as viewed:', error);
+      return false;
     }
   };
 
