@@ -37,7 +37,6 @@ const AdminDashboard = () => {
   });
   const [subscriptionLoading, setSubscriptionLoading] = useState(false);
   const [subscriptionSaving, setSubscriptionSaving] = useState(false);
-  const [hasMarkedViewed, setHasMarkedViewed] = useState(false);
   const limit = 10;
 
   const toggleKycExpand = (id) => {
@@ -47,18 +46,15 @@ const AdminDashboard = () => {
     }));
   };
 
-  // Mark users as viewed when admin panel first loads
+  // Mark users as viewed when admin leaves the page
   useEffect(() => {
-    const markOnMount = async () => {
-      await markUsersAsViewed();
-      setHasMarkedViewed(true);
+    return () => {
+      // Cleanup: mark users as viewed when component unmounts
+      markUsersAsViewed();
     };
-    markOnMount();
   }, []);
 
   useEffect(() => {
-    if (!hasMarkedViewed) return; // Wait for users to be marked as viewed first
-    
     fetchStats();
     if (activeTab === 'users') {
       fetchUsers();
@@ -69,7 +65,7 @@ const AdminDashboard = () => {
     } else if (activeTab === 'subscription') {
       fetchSubscriptionSettings();
     }
-  }, [search, role, status, page, activeTab, kycStatus, reportStatus, hasMarkedViewed]);
+  }, [search, role, status, page, activeTab, kycStatus, reportStatus]);
 
   const fetchStats = async () => {
     try {
