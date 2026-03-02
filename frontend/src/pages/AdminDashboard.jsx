@@ -46,31 +46,21 @@ const AdminDashboard = () => {
     }));
   };
 
-  // Mark users as viewed after admin has been on page for a few seconds
+  // Mark users as viewed on first visit, badges disappear after refresh
   useEffect(() => {
-    // Auto-mark users as viewed after 3 seconds of being on the page
-    const timer = setTimeout(() => {
+    const adminVisited = localStorage.getItem('adminPanelVisited');
+    
+    if (!adminVisited) {
+      // First time visiting - show NEW badges, then mark as viewed
+      localStorage.setItem('adminPanelVisited', 'true');
+      // Mark users as viewed in background after showing the badges
+      setTimeout(() => {
+        markUsersAsViewed();
+      }, 2000);
+    } else {
+      // Already visited before - immediately mark any new users as viewed
       markUsersAsViewed();
-    }, 3000);
-    
-    // Also mark when leaving the page
-    const handleBeforeUnload = () => {
-      // Use synchronous approach for more reliability
-      const token = getAuthToken();
-      if (navigator.sendBeacon) {
-        const url = `${API_URL}/admin/users/mark-viewed`;
-        const formData = new FormData();
-        formData.append('token', token);
-        navigator.sendBeacon(url, formData);
-      }
-    };
-    
-    window.addEventListener('beforeunload', handleBeforeUnload);
-    
-    return () => {
-      clearTimeout(timer);
-      window.removeEventListener('beforeunload', handleBeforeUnload);
-    };
+    }
   }, []);
 
   useEffect(() => {
