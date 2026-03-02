@@ -46,19 +46,10 @@ const AdminDashboard = () => {
     }));
   };
 
-  // Mark users as viewed when admin leaves the page or refreshes
+  // NEW badges stay visible - no auto-marking
   useEffect(() => {
-    const handleBeforeUnload = () => {
-      markUsersAsViewed();
-    };
-
-    window.addEventListener('beforeunload', handleBeforeUnload);
-
-    return () => {
-      window.removeEventListener('beforeunload', handleBeforeUnload);
-      // Also mark as viewed when leaving the admin panel
-      markUsersAsViewed();
-    };
+    // Mark users as viewed on every page load (after refresh)
+    markUsersAsViewed();
   }, []);
 
   useEffect(() => {
