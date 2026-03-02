@@ -99,13 +99,6 @@ const ServiceCard = ({ service, showProvider = true, viewMode = 'grid' }) => {
           {service.title}
         </h3>
 
-        {/* Description */}
-        {viewMode !== 'list' && (
-          <p className="text-sm text-gray-600 mb-1.5 line-clamp-2">
-            {service.description}
-          </p>
-        )}
-
         {/* Provider Info */}
         {showProvider && service.providerId && viewMode !== 'list' && (
           <div className="flex items-center space-x-2 mb-1.5">
