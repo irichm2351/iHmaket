@@ -120,7 +120,7 @@ const Home = () => {
       </section>
 
       {/* Categories Section */}
-      <section className="py-16 bg-gray-50">
+      <section className="pt-16 pb-8 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <h2 className="text-3xl font-bold text-center mb-12">Popular Categories</h2>
           
@@ -144,7 +144,7 @@ const Home = () => {
       </section>
 
       {/* Featured Services */}
-      <section className="py-8">
+      <section className="pt-4 pb-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center mb-12">
             <h2 className="text-2xl font-bold">Featured Services</h2>
