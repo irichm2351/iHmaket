@@ -37,6 +37,7 @@ const AdminDashboard = () => {
   });
   const [subscriptionLoading, setSubscriptionLoading] = useState(false);
   const [subscriptionSaving, setSubscriptionSaving] = useState(false);
+  const [hasMarkedViewed, setHasMarkedViewed] = useState(false);
   const limit = 10;
 
   const toggleKycExpand = (id) => {
@@ -46,11 +47,21 @@ const AdminDashboard = () => {
     }));
   };
 
+  // Mark users as viewed when admin panel first loads
   useEffect(() => {
+    const markOnMount = async () => {
+      await markUsersAsViewed();
+      setHasMarkedViewed(true);
+    };
+    markOnMount();
+  }, []);
+
+  useEffect(() => {
+    if (!hasMarkedViewed) return; // Wait for users to be marked as viewed first
+    
     fetchStats();
     if (activeTab === 'users') {
       fetchUsers();
-      markUsersAsViewed();
     } else if (activeTab === 'kyc') {
       fetchKycSubmissions();
     } else if (activeTab === 'reports') {
@@ -58,7 +69,7 @@ const AdminDashboard = () => {
     } else if (activeTab === 'subscription') {
       fetchSubscriptionSettings();
     }
-  }, [search, role, status, page, activeTab, kycStatus, reportStatus]);
+  }, [search, role, status, page, activeTab, kycStatus, reportStatus, hasMarkedViewed]);
 
   const fetchStats = async () => {
     try {
@@ -86,7 +97,7 @@ const AdminDashboard = () => {
           headers: { Authorization: `Bearer ${token}` } 
         }
       );
-      // Silently mark as viewed, don't show notification
+      // Silently mark as viewed in background
     } catch (error) {
       console.error('Error marking users as viewed:', error);
     }
