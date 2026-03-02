@@ -10,7 +10,7 @@ const categories = [
   'Plumbing', 'Electrical', 'Cleaning', 'Carpentry', 'Painting',
   'Beauty & Makeup', 'Catering', 'Photography', 'Tutoring',
   'IT & Tech Support', 'Home Repair', 'Gardening',
-  'Moving & Delivery', 'Event Planning', 'Health & Fitness', 'Other'
+  'Moving & Delivery', 'Event Planning', 'Health & Fitness', 'Fashion & Tailoring', 'Other'
 ];
 
 const PostService = () => {

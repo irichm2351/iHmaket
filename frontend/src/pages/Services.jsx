@@ -23,6 +23,7 @@ const categories = [
   'Moving & Delivery',
   'Event Planning',
   'Health & Fitness',
+  'Fashion & Tailoring',
   'Other'
 ];
 

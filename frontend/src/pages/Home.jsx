@@ -16,6 +16,7 @@ const categories = [
   { name: 'Catering', icon: '🍳' },
   { name: 'Tutoring', icon: '📚' },
   { name: 'Home Repair', icon: '🔨' },
+  { name: 'Fashion & Tailoring', icon: '👗' },
 ];
 
 const Home = () => {
