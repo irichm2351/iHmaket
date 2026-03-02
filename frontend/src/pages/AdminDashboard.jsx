@@ -46,12 +46,6 @@ const AdminDashboard = () => {
     }));
   };
 
-  // NEW badges stay visible - no auto-marking
-  useEffect(() => {
-    // Mark users as viewed on every page load (after refresh)
-    markUsersAsViewed();
-  }, []);
-
   useEffect(() => {
     fetchStats();
     if (activeTab === 'users') {
@@ -78,21 +72,6 @@ const AdminDashboard = () => {
       }
     } catch (error) {
       console.error('Error fetching stats:', error);
-    }
-  };
-
-  const markUsersAsViewed = async () => {
-    try {
-      const token = getAuthToken();
-      await fetch(
-        `${API_URL}/admin/users/mark-viewed`,
-        {
-          method: 'PUT',
-          headers: { Authorization: `Bearer ${token}` }
-        }
-      );
-    } catch (error) {
-      console.error('Error marking users as viewed:', error);
     }
   };
 
@@ -830,14 +809,7 @@ const AdminDashboard = () => {
                   {users.map((user) => (
                     <tr key={user._id} className="border-b hover:bg-gray-50">
                       <td className="px-6 py-4">
-                        <div className="flex items-center gap-2">
-                          <div className="font-medium text-gray-900">{user.name}</div>
-                          {user.isNewUser && (
-                            <span className="px-2 py-0.5 bg-blue-500 text-white text-xs font-semibold rounded-full">
-                              NEW
-                            </span>
-                          )}
-                        </div>
+                        <div className="font-medium text-gray-900">{user.name}</div>
                       </td>
                       <td className="px-6 py-4 text-sm text-gray-600">{user.email}</td>
                       <td className="px-6 py-4 text-sm text-gray-600">{user.phone || 'N/A'}</td>
