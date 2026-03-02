@@ -50,6 +50,7 @@ const AdminDashboard = () => {
     fetchStats();
     if (activeTab === 'users') {
       fetchUsers();
+      markUsersAsViewed();
     } else if (activeTab === 'kyc') {
       fetchKycSubmissions();
     } else if (activeTab === 'reports') {
@@ -72,6 +73,22 @@ const AdminDashboard = () => {
       }
     } catch (error) {
       console.error('Error fetching stats:', error);
+    }
+  };
+
+  const markUsersAsViewed = async () => {
+    try {
+      const token = getAuthToken();
+      await fetch(
+        `${API_URL}/admin/users/mark-viewed`,
+        { 
+          method: 'PUT',
+          headers: { Authorization: `Bearer ${token}` } 
+        }
+      );
+      // Silently mark as viewed, don't show notification
+    } catch (error) {
+      console.error('Error marking users as viewed:', error);
     }
   };
 
@@ -529,13 +546,18 @@ const AdminDashboard = () => {
                 setActiveTab('users');
                 setPage(1);
               }}
-              className={`px-6 py-3 font-medium transition ${
+              className={`px-6 py-3 font-medium transition relative ${
                 activeTab === 'users'
                   ? 'border-b-2 border-blue-600 text-blue-600'
                   : 'text-gray-600 hover:text-gray-900'
               }`}
             >
               User Management
+              {stats.newUsers > 0 && (
+                <span className="ml-2 px-2 py-1 bg-blue-500 text-white text-xs rounded-full animate-pulse">
+                  {stats.newUsers}
+                </span>
+              )}
             </button>
             <button
               onClick={() => {
@@ -799,6 +821,7 @@ const AdminDashboard = () => {
                   <tr>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Name</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Email</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Phone</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Role</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Status</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Actions</th>
@@ -808,9 +831,17 @@ const AdminDashboard = () => {
                   {users.map((user) => (
                     <tr key={user._id} className="border-b hover:bg-gray-50">
                       <td className="px-6 py-4">
-                        <div className="font-medium text-gray-900">{user.name}</div>
+                        <div className="flex items-center gap-2">
+                          <div className="font-medium text-gray-900">{user.name}</div>
+                          {user.isNewUser && (
+                            <span className="px-2 py-0.5 bg-blue-500 text-white text-xs font-semibold rounded-full animate-pulse">
+                              NEW
+                            </span>
+                          )}
+                        </div>
                       </td>
                       <td className="px-6 py-4 text-sm text-gray-600">{user.email}</td>
+                      <td className="px-6 py-4 text-sm text-gray-600">{user.phone || 'N/A'}</td>
                       <td className="px-6 py-4">
                         <select
                           value={user.role}

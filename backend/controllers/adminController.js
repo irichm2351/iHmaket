@@ -236,6 +236,7 @@ exports.getDashboardStats = async (req, res) => {
     const totalBookings = await Booking.countDocuments();
 
     const pendingKyc = await User.countDocuments({ kycStatus: 'pending' });
+    const newUsers = await User.countDocuments({ isNewUser: true });
 
     res.json({
       success: true,
@@ -247,13 +248,43 @@ exports.getDashboardStats = async (req, res) => {
         restrictedUsers,
         totalServices,
         totalBookings,
-        pendingKyc
+        pendingKyc,
+        newUsers
       }
     });
   } catch (error) {
     res.status(500).json({
       success: false,
       message: 'Error fetching stats',
+      error: error.message
+    });
+  }
+};
+
+// @desc    Mark new users as viewed by admin
+// @route   PUT /api/admin/users/mark-viewed
+// @access  Private/Admin
+exports.markUsersAsViewed = async (req, res) => {
+  try {
+    const result = await User.updateMany(
+      { isNewUser: true },
+      { 
+        $set: { 
+          isNewUser: false,
+          viewedByAdminAt: new Date()
+        }
+      }
+    );
+
+    res.json({
+      success: true,
+      message: `${result.modifiedCount} new user(s) marked as viewed`,
+      count: result.modifiedCount
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Error marking users as viewed',
       error: error.message
     });
   }
