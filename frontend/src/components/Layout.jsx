@@ -18,6 +18,10 @@ const Layout = () => {
   const notificationSoundRef = useRef(null);
 
   useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [location.pathname, location.search]);
+
+  useEffect(() => {
     if ('Notification' in window && Notification.permission === 'default') {
       Notification.requestPermission();
     }
