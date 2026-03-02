@@ -37,7 +37,6 @@ const AdminDashboard = () => {
   });
   const [subscriptionLoading, setSubscriptionLoading] = useState(false);
   const [subscriptionSaving, setSubscriptionSaving] = useState(false);
-  const [markingNewUsers, setMarkingNewUsers] = useState(false);
   const limit = 10;
 
   const toggleKycExpand = (id) => {
@@ -46,6 +45,21 @@ const AdminDashboard = () => {
       [id]: !prev[id]
     }));
   };
+
+  // Mark users as viewed when admin leaves the page or refreshes
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      markUsersAsViewed();
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      // Also mark as viewed when leaving the admin panel
+      markUsersAsViewed();
+    };
+  }, []);
 
   useEffect(() => {
     fetchStats();
@@ -59,38 +73,6 @@ const AdminDashboard = () => {
       fetchSubscriptionSettings();
     }
   }, [search, role, status, page, activeTab, kycStatus, reportStatus]);
-
-  useEffect(() => {
-    if (activeTab !== 'users' || markingNewUsers) return;
-
-    const hasNewUsers = users.some((user) => user.isNewUser);
-    if (!hasNewUsers) return;
-
-    const timer = setTimeout(async () => {
-      try {
-        setMarkingNewUsers(true);
-
-        // Optimistically clear NEW badges in UI immediately after admin sees them
-        setUsers((prevUsers) =>
-          prevUsers.map((user) =>
-            user.isNewUser ? { ...user, isNewUser: false } : user
-          )
-        );
-        setStats((prevStats) => ({ ...prevStats, newUsers: 0 }));
-
-        const success = await markUsersAsViewed();
-
-        // If backend update fails, resync data from server
-        if (!success) {
-          await Promise.all([fetchUsers(), fetchStats()]);
-        }
-      } finally {
-        setMarkingNewUsers(false);
-      }
-    }, 1500);
-
-    return () => clearTimeout(timer);
-  }, [users, activeTab, markingNewUsers]);
 
   const fetchStats = async () => {
     try {
@@ -111,23 +93,15 @@ const AdminDashboard = () => {
   const markUsersAsViewed = async () => {
     try {
       const token = getAuthToken();
-      const response = await fetch(
+      await fetch(
         `${API_URL}/admin/users/mark-viewed`,
         {
           method: 'PUT',
           headers: { Authorization: `Bearer ${token}` }
         }
       );
-
-      if (!response.ok) {
-        return false;
-      }
-
-      const data = await response.json();
-      return Boolean(data?.success);
     } catch (error) {
       console.error('Error marking users as viewed:', error);
-      return false;
     }
   };
 
