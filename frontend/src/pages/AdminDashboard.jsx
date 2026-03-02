@@ -46,23 +46,6 @@ const AdminDashboard = () => {
     }));
   };
 
-  // Mark users as viewed on first visit, badges disappear after refresh
-  useEffect(() => {
-    const adminVisited = localStorage.getItem('adminPanelVisited');
-    
-    if (!adminVisited) {
-      // First time visiting - show NEW badges, then mark as viewed
-      localStorage.setItem('adminPanelVisited', 'true');
-      // Mark users as viewed in background after showing the badges
-      setTimeout(() => {
-        markUsersAsViewed();
-      }, 2000);
-    } else {
-      // Already visited before - immediately mark any new users as viewed
-      markUsersAsViewed();
-    }
-  }, []);
-
   useEffect(() => {
     fetchStats();
     if (activeTab === 'users') {
@@ -89,22 +72,6 @@ const AdminDashboard = () => {
       }
     } catch (error) {
       console.error('Error fetching stats:', error);
-    }
-  };
-
-  const markUsersAsViewed = async () => {
-    try {
-      const token = getAuthToken();
-      await fetch(
-        `${API_URL}/admin/users/mark-viewed`,
-        { 
-          method: 'PUT',
-          headers: { Authorization: `Bearer ${token}` } 
-        }
-      );
-      // Silently mark as viewed in background
-    } catch (error) {
-      console.error('Error marking users as viewed:', error);
     }
   };
 
@@ -569,11 +536,6 @@ const AdminDashboard = () => {
               }`}
             >
               User Management
-              {stats.newUsers > 0 && (
-                <span className="ml-2 px-2 py-1 bg-blue-500 text-white text-xs rounded-full animate-pulse">
-                  {stats.newUsers}
-                </span>
-              )}
             </button>
             <button
               onClick={() => {
@@ -847,14 +809,7 @@ const AdminDashboard = () => {
                   {users.map((user) => (
                     <tr key={user._id} className="border-b hover:bg-gray-50">
                       <td className="px-6 py-4">
-                        <div className="flex items-center gap-2">
-                          <div className="font-medium text-gray-900">{user.name}</div>
-                          {user.isNewUser && (
-                            <span className="px-2 py-0.5 bg-blue-500 text-white text-xs font-semibold rounded-full animate-pulse">
-                              NEW
-                            </span>
-                          )}
-                        </div>
+                        <div className="font-medium text-gray-900">{user.name}</div>
                       </td>
                       <td className="px-6 py-4 text-sm text-gray-600">{user.email}</td>
                       <td className="px-6 py-4 text-sm text-gray-600">{user.phone || 'N/A'}</td>
