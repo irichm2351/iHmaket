@@ -72,14 +72,14 @@ const ServiceCard = ({ service, showProvider = true, viewMode = 'grid' }) => {
         {service.isFeatured && (
           <span className={`absolute ${
             viewMode === 'list' ? 'top-1 left-1' : 'top-3 left-3'
-          } bg-yellow-400 text-gray-900 px-2 py-0.5 rounded-full text-xs font-semibold`}>
+          } bg-yellow-400 text-gray-900 px-2 py-0.5 rounded-full text-[11px] font-semibold`}>
             Featured
           </span>
         )}
 
         {/* Image Count */}
         {service.images?.length > 1 && viewMode !== 'list' && (
-          <span className="absolute bottom-3 left-3 bg-black bg-opacity-60 text-white px-2 py-1 rounded-full text-xs font-semibold">
+          <span className="absolute bottom-3 left-3 bg-black bg-opacity-60 text-white px-2 py-1 rounded-full text-[11px] font-semibold">
             {service.images.length} images
           </span>
         )}
@@ -88,13 +88,13 @@ const ServiceCard = ({ service, showProvider = true, viewMode = 'grid' }) => {
       {/* Content */}
       <div className={`${viewMode === 'list' ? 'flex-1' : ''} p-2`}>
         {/* Category */}
-        <span className="inline-block px-1.5 py-0.5 bg-primary-100 text-primary-700 text-xs font-medium rounded-full mb-1">
+        <span className="inline-block px-1.5 py-0.5 bg-primary-100 text-primary-700 text-[11px] font-medium rounded-full mb-1">
           {service.category}
         </span>
 
         {/* Title */}
         <h3 className={`font-semibold text-gray-900 mb-1 ${
-          viewMode === 'list' ? 'text-base line-clamp-1' : 'text-lg line-clamp-2'
+          viewMode === 'list' ? 'text-sm line-clamp-1' : 'text-base line-clamp-2'
         }`}>
           {service.title}
         </h3>
@@ -115,7 +115,7 @@ const ServiceCard = ({ service, showProvider = true, viewMode = 'grid' }) => {
               }}
               title="View picture"
             />
-            <span className="text-sm text-gray-700 font-medium">
+            <span className="text-xs text-gray-700 font-medium">
               {service.providerId.name}
             </span>
           </div>
@@ -128,12 +128,12 @@ const ServiceCard = ({ service, showProvider = true, viewMode = 'grid' }) => {
           {/* Price Section */}
           <div className="flex flex-col">
             <span className={`font-bold text-primary-600 ${
-              viewMode === 'list' ? 'text-lg' : 'text-xl'
+              viewMode === 'list' ? 'text-base' : 'text-lg'
             }`}>
               ₦{service.price?.amount?.toLocaleString()}
             </span>
             {service.price?.negotiable && (
-              <span className="inline-block px-2 py-0.5 bg-amber-100 text-amber-700 text-xs font-semibold rounded mt-0.5 w-fit">
+              <span className="inline-block px-2 py-0.5 bg-amber-100 text-amber-700 text-[11px] font-semibold rounded mt-0.5 w-fit">
                 Negotiable
               </span>
             )}
@@ -142,12 +142,12 @@ const ServiceCard = ({ service, showProvider = true, viewMode = 'grid' }) => {
           {/* Rating Section */}
           <div className="flex flex-col items-end">
             <div className="flex items-center space-x-1">
-              <FiStar className="text-yellow-400 fill-yellow-400" size={viewMode === 'list' ? 16 : 18} />
-              <span className="text-sm font-bold text-gray-900">
+              <FiStar className="text-yellow-400 fill-yellow-400" size={viewMode === 'list' ? 14 : 16} />
+              <span className="text-xs font-bold text-gray-900">
                 {service.rating?.toFixed(1) || '0.0'}
               </span>
             </div>
-            <span className="text-xs text-gray-500">
+            <span className="text-[11px] text-gray-500">
               ({service.totalReviews || 0} reviews)
             </span>
           </div>
@@ -170,8 +170,8 @@ const ServiceCard = ({ service, showProvider = true, viewMode = 'grid' }) => {
 
         {/* Location */}
         {viewMode !== 'list' && (
-          <div className="flex items-center text-sm text-gray-500 mt-0.5">
-            <FiMapPin size={14} className="mr-1" />
+          <div className="flex items-center text-xs text-gray-500 mt-0.5">
+            <FiMapPin size={12} className="mr-1" />
             {service.location?.lga || service.location?.city}, {service.location?.state}
           </div>
         )}
