@@ -37,6 +37,7 @@ const AdminDashboard = () => {
   });
   const [subscriptionLoading, setSubscriptionLoading] = useState(false);
   const [subscriptionSaving, setSubscriptionSaving] = useState(false);
+  const [markingNewUsers, setMarkingNewUsers] = useState(false);
   const limit = 10;
 
   const toggleKycExpand = (id) => {
@@ -59,6 +60,25 @@ const AdminDashboard = () => {
     }
   }, [search, role, status, page, activeTab, kycStatus, reportStatus]);
 
+  useEffect(() => {
+    if (activeTab !== 'users' || markingNewUsers) return;
+
+    const hasNewUsers = users.some((user) => user.isNewUser);
+    if (!hasNewUsers) return;
+
+    const timer = setTimeout(async () => {
+      try {
+        setMarkingNewUsers(true);
+        await markUsersAsViewed();
+        await Promise.all([fetchUsers(), fetchStats()]);
+      } finally {
+        setMarkingNewUsers(false);
+      }
+    }, 1500);
+
+    return () => clearTimeout(timer);
+  }, [users, activeTab, markingNewUsers]);
+
   const fetchStats = async () => {
     try {
       const token = getAuthToken();
@@ -72,6 +92,21 @@ const AdminDashboard = () => {
       }
     } catch (error) {
       console.error('Error fetching stats:', error);
+    }
+  };
+
+  const markUsersAsViewed = async () => {
+    try {
+      const token = getAuthToken();
+      await fetch(
+        `${API_URL}/admin/users/mark-viewed`,
+        {
+          method: 'PUT',
+          headers: { Authorization: `Bearer ${token}` }
+        }
+      );
+    } catch (error) {
+      console.error('Error marking users as viewed:', error);
     }
   };
 
@@ -809,7 +844,14 @@ const AdminDashboard = () => {
                   {users.map((user) => (
                     <tr key={user._id} className="border-b hover:bg-gray-50">
                       <td className="px-6 py-4">
-                        <div className="font-medium text-gray-900">{user.name}</div>
+                        <div className="flex items-center gap-2">
+                          <div className="font-medium text-gray-900">{user.name}</div>
+                          {user.isNewUser && (
+                            <span className="px-2 py-0.5 bg-blue-500 text-white text-xs font-semibold rounded-full">
+                              NEW
+                            </span>
+                          )}
+                        </div>
                       </td>
                       <td className="px-6 py-4 text-sm text-gray-600">{user.email}</td>
                       <td className="px-6 py-4 text-sm text-gray-600">{user.phone || 'N/A'}</td>
