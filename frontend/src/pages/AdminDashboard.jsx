@@ -1490,6 +1490,22 @@ const AdminDashboard = () => {
                         </span>
                       )}
                     </div>
+                    
+                    {/* Profile Picture */}
+                    <div className="flex justify-center mb-6">
+                      <div className="relative">
+                        <img
+                          src={selectedUserProfile.profilePic || 'https://via.placeholder.com/150?text=User'}
+                          alt={selectedUserProfile.name}
+                          className="w-32 h-32 rounded-full object-cover border-4 border-white shadow-lg"
+                          onError={(e) => {
+                            e.target.onerror = null;
+                            e.target.src = 'https://via.placeholder.com/150?text=User';
+                          }}
+                        />
+                      </div>
+                    </div>
+
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
                         <span className="text-sm font-medium text-gray-600">Name:</span>
