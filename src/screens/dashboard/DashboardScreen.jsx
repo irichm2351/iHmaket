@@ -26,6 +26,7 @@ const DashboardScreen = () => {
   const [loadingSavedServices, setLoadingSavedServices] = useState(false);
   const [subscriptionStatus, setSubscriptionStatus] = useState(null);
   const [subscriptionLoading, setSubscriptionLoading] = useState(false);
+  const [imageRatios, setImageRatios] = useState({});
 
   useEffect(() => {
     fetchDashboardStats();
@@ -115,6 +116,21 @@ const DashboardScreen = () => {
     subscriptionStatus?.enabled &&
     subscriptionStatus?.isProvider &&
     !subscriptionStatus?.isActive;
+
+  const setImageRatio = (serviceId, width, height) => {
+    if (!serviceId || !width || !height) return;
+    const ratio = width / height;
+    if (!Number.isFinite(ratio)) return;
+    setImageRatios((prev) => (prev[serviceId] === ratio ? prev : { ...prev, [serviceId]: ratio }));
+  };
+
+  const getServiceImageHeight = (serviceId) => {
+    const baseWidth = 90;
+    const ratio = imageRatios[serviceId];
+    if (!ratio) return baseWidth;
+    const height = baseWidth / ratio;
+    return Math.max(60, Math.min(120, height));
+  };
 
   const getSubscriptionBadgeText = () => {
     if (!subscriptionStatus?.isActive || !subscriptionStatus?.expiresAt) {
@@ -309,16 +325,20 @@ const DashboardScreen = () => {
                   scrollEnabled={false}
                   renderItem={({ item }) => (
                     <View style={styles.serviceItemCard}>
-                      <View style={styles.serviceImageContainer}>
+                      <View style={[styles.serviceImageContainer, { height: getServiceImageHeight(item._id) }]}>
                         {item.images && item.images.length > 0 ? (
                           <Image
                             source={{ uri: typeof item.images[0] === 'object' ? item.images[0].url : item.images[0] }}
                             style={styles.serviceImage}
                             resizeMode="contain"
+                            onLoad={(event) => {
+                              const { width, height } = event.nativeEvent.source || {};
+                              setImageRatio(item._id, width, height);
+                            }}
                           />
                         ) : (
                           <View style={styles.imagePlaceholder}>
-                            <MaterialCommunityIcons name="image" size={40} color="#d1d5db" />
+                            <MaterialCommunityIcons name="image" size={32} color="#d1d5db" />
                           </View>
                         )}
                       </View>
@@ -625,7 +645,6 @@ const styles = StyleSheet.create({
   },
   serviceImageContainer: {
     width: 90,
-    height: 90,
     backgroundColor: '#f3f4f6',
     justifyContent: 'center',
     alignItems: 'center',
