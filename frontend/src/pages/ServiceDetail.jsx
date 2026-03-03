@@ -44,6 +44,19 @@ const ServiceDetail = () => {
     fetchReviews();
   }, [id, isAuthenticated, navigate]);
 
+  useEffect(() => {
+    // Handle ESC key for closing image modal
+    const handleEscKey = (e) => {
+      if (e.key === 'Escape' && viewingImage) {
+        setViewingImage(null);
+      }
+    };
+    if (viewingImage) {
+      window.addEventListener('keydown', handleEscKey);
+    }
+    return () => window.removeEventListener('keydown', handleEscKey);
+  }, [viewingImage]);
+
   const fetchServiceDetails = async () => {
     try {
       const response = await serviceAPI.getServiceById(id);
@@ -155,7 +168,7 @@ const ServiceDetail = () => {
         {/* Main Content */}
         <div className="lg:col-span-2">
           {/* Images Carousel */}
-          <ImageCarousel images={service.images} title={service.title} />
+          <ImageCarousel images={service.images} title={service.title} onImageClick={setViewingImage} />
 
           {/* Service Info */}
           <div className="card p-6 mb-6">
@@ -494,22 +507,27 @@ const ServiceDetail = () => {
       {/* Image Viewer Modal */}
       {viewingImage && (
         <div
-          className="fixed inset-0 bg-black bg-opacity-75 z-50 flex items-center justify-center p-4"
+          className="fixed inset-0 bg-black bg-opacity-75 z-50 flex items-center justify-center p-4 cursor-pointer"
           onClick={() => setViewingImage(null)}
         >
-          <div className="relative max-w-3xl w-full" onClick={(e) => e.stopPropagation()}>
+          <div className="relative max-w-4xl w-full" onClick={(e) => e.stopPropagation()}>
             <button
               onClick={() => setViewingImage(null)}
-              className="absolute -top-10 right-0 text-white hover:text-gray-300 text-lg font-medium"
+              className="absolute -top-12 right-0 text-white hover:text-gray-300 text-3xl font-bold transition duration-200 z-10 leading-none w-10 h-10 flex items-center justify-center"
+              title="Close (ESC)"
+              aria-label="Close image"
             >
-              Close (ESC)
+              ×
             </button>
-            <img
-              src={viewingImage}
-              alt="Profile"
-              className="w-full h-auto max-h-[85vh] object-contain rounded-lg"
-              onClick={(e) => e.stopPropagation()}
-            />
+            <div className="bg-black rounded-lg overflow-hidden">
+              <img
+                src={viewingImage}
+                alt="Full size"
+                className="w-full h-auto max-h-[90vh] object-contain"
+                onClick={(e) => e.stopPropagation()}
+              />
+            </div>
+            <p className="text-white text-center mt-3 text-sm">Click outside or press ESC to close</p>
           </div>
         </div>
       )}

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { FiChevronLeft, FiChevronRight } from 'react-icons/fi';
 import { getImageUrl } from '../utils/api';
 
-const ImageCarousel = ({ images, title }) => {
+const ImageCarousel = ({ images, title, onImageClick }) => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
   if (!images || images.length === 0) {
@@ -34,7 +34,9 @@ const ImageCarousel = ({ images, title }) => {
   return (
     <div className="mb-6">
       {/* Main Image with Navigation */}
-      <div className="relative bg-gray-100 rounded-lg overflow-hidden group">
+      <div className="relative bg-gray-100 rounded-lg overflow-hidden group cursor-pointer"
+        onClick={() => onImageClick && onImageClick(getImageUrl(currentImage?.url))}
+        title="Click to enlarge">
         <img
           src={getImageUrl(currentImage?.url)}
           alt={`${title} ${currentImageIndex + 1}`}
@@ -73,13 +75,20 @@ const ImageCarousel = ({ images, title }) => {
           {images.map((img, index) => (
             <button
               key={index}
-              onClick={() => goToImage(index)}
-              className={`relative h-20 rounded-lg overflow-hidden transition-all border-2 ${
+              onClick={(e) => {
+                e.stopPropagation();
+                goToImage(index);
+              }}
+              onDoubleClick={(e) => {
+                e.stopPropagation();
+                onImageClick && onImageClick(getImageUrl(img.url));
+              }}
+              className={`relative h-20 rounded-lg overflow-hidden transition-all border-2 cursor-pointer hover:opacity-80 ${
                 index === currentImageIndex
                   ? 'border-primary-600 scale-105'
                   : 'border-gray-300 hover:border-primary-400'
               }`}
-              title={`View image ${index + 1}`}
+              title={`View image ${index + 1} (double-click to enlarge)`}
             >
               <img
                 src={getImageUrl(img.url)}
