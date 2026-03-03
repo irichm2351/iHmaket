@@ -51,6 +51,7 @@ const userSchema = new mongoose.Schema({
     address: String,
     city: String,
     state: String,
+    lga: String,
     country: String
   },
   rating: {

@@ -68,6 +68,7 @@ const serviceSchema = new mongoose.Schema({
       type: String,
       required: true
     },
+    lga: String,
     country: {
       type: String,
       default: 'Nigeria'
