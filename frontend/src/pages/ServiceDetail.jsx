@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { FiMapPin, FiStar, FiCalendar, FiMessageSquare, FiPhone, FiMail, FiFlag } from 'react-icons/fi';
+import { FiMapPin, FiStar, FiCalendar, FiMessageSquare, FiPhone, FiMail, FiFlag, FiChevronLeft, FiChevronRight } from 'react-icons/fi';
 import { serviceAPI, reviewAPI, bookingAPI, reportAPI, getImageUrl } from '../utils/api';
 import useAuthStore from '../store/authStore';
 import Loader from '../components/Loader';
@@ -22,6 +22,8 @@ const ServiceDetail = () => {
   });
   const [reportingLoading, setReportingLoading] = useState(false);
   const [viewingImage, setViewingImage] = useState(null);
+  const [viewingServiceImageIndex, setViewingServiceImageIndex] = useState(null);
+  const [touchStartX, setTouchStartX] = useState(null);
   const [bookingData, setBookingData] = useState({
     scheduledDate: '',
     scheduledTime: '',
@@ -47,15 +49,62 @@ const ServiceDetail = () => {
   useEffect(() => {
     // Handle ESC key for closing image modal
     const handleEscKey = (e) => {
-      if (e.key === 'Escape' && viewingImage) {
+      if (e.key === 'Escape' && (viewingImage || viewingServiceImageIndex !== null)) {
         setViewingImage(null);
+        setViewingServiceImageIndex(null);
       }
     };
-    if (viewingImage) {
+    if (viewingImage || viewingServiceImageIndex !== null) {
       window.addEventListener('keydown', handleEscKey);
     }
     return () => window.removeEventListener('keydown', handleEscKey);
-  }, [viewingImage]);
+  }, [viewingImage, viewingServiceImageIndex]);
+
+  const closeImageModal = () => {
+    setViewingImage(null);
+    setViewingServiceImageIndex(null);
+    setTouchStartX(null);
+  };
+
+  const goToPreviousModalImage = () => {
+    if (!service?.images?.length || viewingServiceImageIndex === null) return;
+    setViewingServiceImageIndex((prevIndex) =>
+      prevIndex === 0 ? service.images.length - 1 : prevIndex - 1
+    );
+  };
+
+  const goToNextModalImage = () => {
+    if (!service?.images?.length || viewingServiceImageIndex === null) return;
+    setViewingServiceImageIndex((prevIndex) =>
+      prevIndex === service.images.length - 1 ? 0 : prevIndex + 1
+    );
+  };
+
+  const handleModalTouchStart = (e) => {
+    if (viewingServiceImageIndex === null || !service?.images?.length) return;
+    setTouchStartX(e.touches[0].clientX);
+  };
+
+  const handleModalTouchEnd = (e) => {
+    if (touchStartX === null || viewingServiceImageIndex === null || !service?.images?.length) {
+      setTouchStartX(null);
+      return;
+    }
+
+    const touchEndX = e.changedTouches[0].clientX;
+    const swipeDistance = touchStartX - touchEndX;
+    const swipeThreshold = 30;
+
+    if (Math.abs(swipeDistance) > swipeThreshold) {
+      if (swipeDistance > 0) {
+        goToNextModalImage();
+      } else {
+        goToPreviousModalImage();
+      }
+    }
+
+    setTouchStartX(null);
+  };
 
   const fetchServiceDetails = async () => {
     try {
@@ -168,7 +217,14 @@ const ServiceDetail = () => {
         {/* Main Content */}
         <div className="lg:col-span-2">
           {/* Images Carousel */}
-          <ImageCarousel images={service.images} title={service.title} onImageClick={setViewingImage} />
+          <ImageCarousel
+            images={service.images}
+            title={service.title}
+            onImageClick={(index) => {
+              setViewingImage(null);
+              setViewingServiceImageIndex(index);
+            }}
+          />
 
           {/* Service Info */}
           <div className="card p-6 mb-6">
@@ -212,6 +268,7 @@ const ServiceDetail = () => {
                         onClick={() => {
                           const imageUrl = getImageUrl(review.customerId?.profilePic);
                           if (imageUrl) {
+                            setViewingServiceImageIndex(null);
                             setViewingImage(imageUrl);
                           }
                         }}
@@ -505,29 +562,65 @@ const ServiceDetail = () => {
       )}
 
       {/* Image Viewer Modal */}
-      {viewingImage && (
+      {(viewingImage || viewingServiceImageIndex !== null) && (
         <div
           className="fixed inset-0 bg-black bg-opacity-75 z-50 flex items-center justify-center p-4 cursor-pointer"
-          onClick={() => setViewingImage(null)}
+          onClick={closeImageModal}
         >
-          <div className="relative max-w-4xl w-full" onClick={(e) => e.stopPropagation()}>
+          <div
+            className="relative max-w-4xl w-full"
+            onClick={(e) => e.stopPropagation()}
+            onTouchStart={handleModalTouchStart}
+            onTouchEnd={handleModalTouchEnd}
+          >
             <button
-              onClick={() => setViewingImage(null)}
+              onClick={closeImageModal}
               className="absolute -top-12 right-0 text-white hover:text-gray-300 text-3xl font-bold transition duration-200 z-10 leading-none w-10 h-10 flex items-center justify-center"
               title="Close (ESC)"
               aria-label="Close image"
             >
               ×
             </button>
+
+            {viewingServiceImageIndex !== null && service?.images?.length > 1 && (
+              <>
+                <button
+                  onClick={goToPreviousModalImage}
+                  className="absolute left-3 top-1/2 -translate-y-1/2 bg-white bg-opacity-90 hover:bg-opacity-100 text-black rounded-full p-2 transition z-10"
+                  title="Previous image"
+                  aria-label="Previous image"
+                >
+                  <FiChevronLeft size={24} />
+                </button>
+                <button
+                  onClick={goToNextModalImage}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 bg-white bg-opacity-90 hover:bg-opacity-100 text-black rounded-full p-2 transition z-10"
+                  title="Next image"
+                  aria-label="Next image"
+                >
+                  <FiChevronRight size={24} />
+                </button>
+                <div className="absolute top-3 right-3 bg-black bg-opacity-60 text-white px-3 py-1 rounded-full text-sm font-semibold z-10">
+                  {viewingServiceImageIndex + 1} / {service.images.length}
+                </div>
+              </>
+            )}
+
             <div className="bg-black rounded-lg overflow-hidden">
               <img
-                src={viewingImage}
+                src={viewingServiceImageIndex !== null
+                  ? getImageUrl(service?.images?.[viewingServiceImageIndex]?.url)
+                  : viewingImage}
                 alt="Full size"
                 className="w-full h-auto max-h-[90vh] object-contain"
                 onClick={(e) => e.stopPropagation()}
               />
             </div>
-            <p className="text-white text-center mt-3 text-sm">Click outside or press ESC to close</p>
+            <p className="text-white text-center mt-3 text-sm">
+              {viewingServiceImageIndex !== null
+                ? 'Swipe left/right or use arrows to navigate. Click outside or press ESC to close'
+                : 'Click outside or press ESC to close'}
+            </p>
           </div>
         </div>
       )}
