@@ -450,15 +450,15 @@ const styles = StyleSheet.create({
   serviceCard: {
     flexDirection: 'row',
     backgroundColor: 'white',
-    borderRadius: 8,
-    marginBottom: 10,
+    borderRadius: 10,
+    marginBottom: 8,
     overflow: 'hidden',
     borderWidth: 1,
     borderColor: '#e5e7eb',
   },
   serviceImage: {
-    width: 100,
-    height: 100,
+    width: 96,
+    height: 96,
     backgroundColor: '#f3f4f6',
     justifyContent: 'center',
     alignItems: 'center',
@@ -479,19 +479,19 @@ const styles = StyleSheet.create({
   },
   serviceInfo: {
     flex: 1,
-    padding: 12,
+    padding: 10,
     justifyContent: 'space-between',
   },
   serviceName: {
     fontSize: 14,
     fontWeight: '600',
     color: '#1f2937',
-    marginBottom: 6,
+    marginBottom: 4,
   },
   providerRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 6,
+    marginBottom: 4,
   },
   providerAvatar: {
     width: 32,
@@ -511,8 +511,8 @@ const styles = StyleSheet.create({
   },
   viewProviderButton: {
     alignSelf: 'flex-start',
-    paddingVertical: 4,
-    paddingHorizontal: 8,
+    paddingVertical: 3,
+    paddingHorizontal: 7,
     borderRadius: 4,
     backgroundColor: '#eff6ff',
   },
@@ -524,7 +524,7 @@ const styles = StyleSheet.create({
   ratingRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 4,
+    marginBottom: 2,
   },
   rating: {
     marginLeft: 4,

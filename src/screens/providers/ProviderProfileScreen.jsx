@@ -610,9 +610,9 @@ const styles = StyleSheet.create({
   serviceCard: {
     flexDirection: 'row',
     backgroundColor: 'white',
-    padding: 12,
+    padding: 10,
     marginHorizontal: 16,
-    marginTop: 12,
+    marginTop: 8,
     borderRadius: 10,
     alignItems: 'center',
   },
@@ -630,7 +630,7 @@ const styles = StyleSheet.create({
     height: '100%',
   },
   serviceInfo: {
-    marginLeft: 12,
+    marginLeft: 10,
     flex: 1,
   },
   serviceTitle: {

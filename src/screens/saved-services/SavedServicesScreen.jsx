@@ -322,7 +322,7 @@ const styles = StyleSheet.create({
   serviceCard: {
     backgroundColor: 'white',
     borderRadius: 12,
-    marginBottom: 12,
+    marginBottom: 10,
     overflow: 'hidden',
     borderWidth: 1,
     borderColor: '#e5e7eb',
@@ -335,7 +335,7 @@ const styles = StyleSheet.create({
   serviceImageContainer: {
     position: 'relative',
     width: '100%',
-    height: 200,
+    height: 180,
     backgroundColor: '#f3f4f6',
   },
   serviceImage: {
@@ -363,14 +363,14 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   serviceInfo: {
-    padding: 12,
+    padding: 10,
   },
   serviceName: {
     fontSize: 16,
     fontWeight: '700',
     color: '#1f2937',
-    marginBottom: 8,
-    lineHeight: 22,
+    marginBottom: 6,
+    lineHeight: 20,
   },
   providerRow: {
     flexDirection: 'row',
@@ -386,7 +386,7 @@ const styles = StyleSheet.create({
   locationRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: 6,
   },
   locationText: {
     fontSize: 12,
@@ -398,7 +398,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: 6,
   },
   ratingRow: {
     flexDirection: 'row',
@@ -423,8 +423,8 @@ const styles = StyleSheet.create({
   categoryBadge: {
     alignSelf: 'flex-start',
     backgroundColor: '#eff6ff',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
+    paddingHorizontal: 9,
+    paddingVertical: 3,
     borderRadius: 6,
   },
   categoryText: {
