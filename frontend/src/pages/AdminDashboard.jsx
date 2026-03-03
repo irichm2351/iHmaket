@@ -1562,15 +1562,9 @@ const AdminDashboard = () => {
                           <p className="text-gray-900 mt-1">{selectedUserProfile.location.state || 'Not provided'}</p>
                         </div>
                         <div>
-                          <span className="text-sm font-medium text-gray-600">City:</span>
-                          <p className="text-gray-900 mt-1">{selectedUserProfile.location.city || 'Not provided'}</p>
+                          <span className="text-sm font-medium text-gray-600">LGA:</span>
+                          <p className="text-gray-900 mt-1">{selectedUserProfile.location.lga || 'Not provided'}</p>
                         </div>
-                        {selectedUserProfile.location.lga && (
-                          <div className="md:col-span-2">
-                            <span className="text-sm font-medium text-gray-600">LGA:</span>
-                            <p className="text-gray-900 mt-1">{selectedUserProfile.location.lga}</p>
-                          </div>
-                        )}
                       </div>
                     </div>
                   )}
