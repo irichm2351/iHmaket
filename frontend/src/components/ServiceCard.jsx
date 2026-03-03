@@ -47,7 +47,7 @@ const ServiceCard = ({ service, showProvider = true, viewMode = 'grid' }) => {
           className={`${
             viewMode === 'list'
               ? 'w-full h-full object-cover block'
-              : 'w-full h-auto max-h-64 object-contain block'
+              : 'w-full h-48 object-cover block'
           }`}
           onError={(e) => {
             e.target.src = 'https://via.placeholder.com/400x300?text=No+Image';
