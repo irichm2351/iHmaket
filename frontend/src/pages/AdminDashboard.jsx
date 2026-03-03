@@ -843,8 +843,6 @@ const AdminDashboard = () => {
                 <thead className="bg-gray-100 border-b">
                   <tr>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Name</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Email</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Phone</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Role</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Status</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Actions</th>
@@ -863,8 +861,6 @@ const AdminDashboard = () => {
                           )}
                         </div>
                       </td>
-                      <td className="px-6 py-4 text-sm text-gray-600">{user.email}</td>
-                      <td className="px-6 py-4 text-sm text-gray-600">{user.phone || 'N/A'}</td>
                       <td className="px-6 py-4">
                         <select
                           value={user.role}
