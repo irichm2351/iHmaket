@@ -32,7 +32,7 @@ const ServiceCard = ({ service, showProvider = true, viewMode = 'grid' }) => {
   };
 
   return (
-    <Link to={`/services/${service._id}`} className={`card overflow-hidden group block h-full ${
+    <Link to={`/services/${service._id}`} className={`card overflow-hidden group block ${
       viewMode === 'list' ? 'flex' : ''
     }`}>
       {/* Image */}
@@ -46,8 +46,8 @@ const ServiceCard = ({ service, showProvider = true, viewMode = 'grid' }) => {
           alt={service.title}
           className={`${
             viewMode === 'list'
-              ? 'w-full h-auto max-h-72 object-contain block'
-              : 'w-full h-auto object-contain block'
+              ? 'w-full h-full object-cover block'
+              : 'w-full h-auto max-h-64 object-contain block'
           }`}
           onError={(e) => {
             e.target.src = 'https://via.placeholder.com/400x300?text=No+Image';
@@ -93,7 +93,7 @@ const ServiceCard = ({ service, showProvider = true, viewMode = 'grid' }) => {
         </span>
 
         {/* Title */}
-        <h3 className={`font-semibold text-gray-900 mb-1 ${
+        <h3 className={`font-semibold text-gray-900 mb-0.5 ${
           viewMode === 'list' ? 'text-sm line-clamp-1' : 'text-base line-clamp-2'
         }`}>
           {service.title}
@@ -130,9 +130,8 @@ const ServiceCard = ({ service, showProvider = true, viewMode = 'grid' }) => {
 
         {/* Footer */}
         <div className={`flex items-start justify-between flex-wrap gap-1.5 ${
-          viewMode === 'list' ? '' : 'pt-1.5 border-t'
-        }`}>
-          {/* Price Section */}
+          viewMode === 'list' ? '' : 'pt-1 border-t'
+        }`}>          {/* Price Section */}
           <div className="flex flex-col">
             <span className={`font-bold text-primary-600 ${
               viewMode === 'list' ? 'text-base' : 'text-lg'
