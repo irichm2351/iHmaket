@@ -38,16 +38,16 @@ const ServiceCard = ({ service, showProvider = true, viewMode = 'grid' }) => {
       {/* Image */}
       <div className={`${
         viewMode === 'list'
-          ? 'w-32 h-32 flex-shrink-0 overflow-hidden'
-          : 'relative aspect-[4/3] overflow-hidden'
+          ? 'w-32 flex-shrink-0 relative'
+          : 'relative'
       } bg-gray-200`}>
         <img
           src={getImageUrl(service.images?.[0]?.url)}
           alt={service.title}
           className={`${
             viewMode === 'list'
-              ? 'w-full h-full object-cover'
-              : 'w-full h-full object-cover'
+              ? 'w-full h-auto max-h-72 object-contain block'
+              : 'w-full h-auto object-contain block'
           }`}
           onError={(e) => {
             e.target.src = 'https://via.placeholder.com/400x300?text=No+Image';
