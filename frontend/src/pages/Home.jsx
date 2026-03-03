@@ -183,10 +183,10 @@ const Home = () => {
             <div className={
               viewMode === 'list'
                 ? 'space-y-2'
-                : 'grid grid-cols-2 lg:grid-cols-4 gap-1.5'
+                : 'masonry-flow'
             }>
               {featuredServices.map((service) => (
-                <div key={service._id} className={viewMode === 'list' ? 'h-32' : ''}>
+                <div key={service._id} className={viewMode === 'list' ? 'h-32' : 'masonry-flow-item'}>
                   <ServiceCard service={service} viewMode={viewMode} />
                 </div>
               ))}

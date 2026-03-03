@@ -49,7 +49,7 @@ const ServiceCard = ({ service, showProvider = true, viewMode = 'grid' }) => {
               ? 'w-full h-full object-cover block'
               : 'w-full h-auto object-cover block'
           }`}
-          style={viewMode !== 'list' ? { minHeight: '180px', maxHeight: '320px' } : {}}
+          style={viewMode !== 'list' ? { minHeight: '120px', maxHeight: '340px' } : {}}
           onError={(e) => {
             e.target.src = 'https://via.placeholder.com/400x300?text=No+Image';
           }}

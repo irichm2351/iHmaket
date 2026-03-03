@@ -284,10 +284,10 @@ const Services = () => {
               <div className={
                 viewMode === 'list'
                   ? 'space-y-2'
-                  : 'masonry-container'
+                  : 'masonry-flow'
               }>
                 {services.map((service) => (
-                  <div key={service._id} className={viewMode === 'list' ? 'h-32' : 'masonry-item'}>
+                  <div key={service._id} className={viewMode === 'list' ? 'h-32' : 'masonry-flow-item'}>
                     <ServiceCard service={service} viewMode={viewMode} />
                   </div>
                 ))}

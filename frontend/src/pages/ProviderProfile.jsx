@@ -194,9 +194,9 @@ const ProviderProfile = () => {
               <p className="text-gray-500">No services available yet.</p>
             </div>
           ) : (
-            <div className="masonry-container cols-3">
+            <div className="masonry-flow cols-3">
               {services.map((service) => (
-                <div key={service._id} className="masonry-item">
+                <div key={service._id} className="masonry-flow-item">
                   <ServiceCard service={service} showProvider={false} />
                 </div>
               ))}
