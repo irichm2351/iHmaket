@@ -21,6 +21,7 @@ const SavedServicesScreen = () => {
   const [savedServices, setSavedServices] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [imageRatios, setImageRatios] = useState({});
 
   useEffect(() => {
     fetchSavedServices();
@@ -117,6 +118,13 @@ const SavedServicesScreen = () => {
     return url;
   };
 
+  const setImageRatio = (serviceId, width, height) => {
+    if (!serviceId || !width || !height) return;
+    const ratio = width / height;
+    if (!Number.isFinite(ratio)) return;
+    setImageRatios((prev) => (prev[serviceId] === ratio ? prev : { ...prev, [serviceId]: ratio }));
+  };
+
   if (loading) {
     return (
       <View style={styles.centerContent}>
@@ -170,12 +178,21 @@ const SavedServicesScreen = () => {
               style={styles.serviceCard}
               onPress={() => handleViewService(service._id)}
             >
-              <View style={styles.serviceImageContainer}>
+              <View
+                style={[
+                  styles.serviceImageContainer,
+                  { aspectRatio: imageRatios[service._id] || 4 / 3 },
+                ]}
+              >
                 {service.images && service.images.length > 0 ? (
                   <Image
                     source={{ uri: getImageUrl(service.images[0]) }}
                     style={styles.serviceImage}
                     resizeMode="cover"
+                    onLoad={(event) => {
+                      const { width, height } = event.nativeEvent.source || {};
+                      setImageRatio(service._id, width, height);
+                    }}
                   />
                 ) : (
                   <View style={styles.imagePlaceholder}>
@@ -335,7 +352,6 @@ const styles = StyleSheet.create({
   serviceImageContainer: {
     position: 'relative',
     width: '100%',
-    height: 180,
     backgroundColor: '#f3f4f6',
   },
   serviceImage: {
