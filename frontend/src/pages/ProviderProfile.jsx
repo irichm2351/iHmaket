@@ -103,10 +103,10 @@ const ProviderProfile = () => {
               <div>
                 <h1 className="text-3xl font-bold text-gray-900 mb-2">{provider.name}</h1>
                 <div className="flex items-center space-x-4 text-gray-600 mb-2">
-                  {provider.location?.lga && provider.location?.state && (
+                  {provider.location?.state && (
                     <div className="flex items-center">
                       <FiMapPin className="mr-1" />
-                      <span>{provider.location.lga}, {provider.location.state}</span>
+                      <span>{provider.location.lga ? `${provider.location.lga}, ` : ''}{provider.location.state}</span>
                     </div>
                   )}
                   {provider.rating > 0 && (

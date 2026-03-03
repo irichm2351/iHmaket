@@ -179,7 +179,9 @@ const ServiceCard = ({ service, showProvider = true, viewMode = 'grid' }) => {
         {viewMode !== 'list' && (
           <div className="flex items-center text-xs text-gray-500 mt-0.5">
             <FiMapPin size={12} className="mr-1" />
-            {service.location?.lga}, {service.location?.state}
+            {service.location?.state && (
+              <span>{service.location.lga ? `${service.location.lga}, ` : ''}{service.location.state}</span>
+            )}
           </div>
         )}
       </div>

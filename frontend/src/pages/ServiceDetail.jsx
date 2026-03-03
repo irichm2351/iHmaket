@@ -173,7 +173,9 @@ const ServiceDetail = () => {
               </div>
               <div className="flex items-center text-gray-600">
                 <FiMapPin className="mr-1" />
-                {service.location?.lga}, {service.location?.state}
+                {service.location?.state && (
+                  <span>{service.location.lga ? `${service.location.lga}, ` : ''}{service.location.state}</span>
+                )}
               </div>
             </div>
 
@@ -305,7 +307,9 @@ const ServiceDetail = () => {
               )}
               <div className="flex items-center text-gray-600">
                 <FiMapPin className="mr-2" />
-                {service.providerId?.location?.lga}, {service.providerId?.location?.state}
+                {service.providerId?.location?.state && (
+                  <span>{service.providerId.location.lga ? `${service.providerId.location.lga}, ` : ''}{service.providerId.location.state}</span>
+                )}
               </div>
             </div>
 
