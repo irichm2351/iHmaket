@@ -32,14 +32,14 @@ const ServiceCard = ({ service, showProvider = true, viewMode = 'grid' }) => {
   };
 
   return (
-    <Link to={`/services/${service._id}`} className={`card overflow-hidden group block ${
+    <Link to={`/services/${service._id}`} className={`card overflow-hidden group block h-full ${
       viewMode === 'list' ? 'flex' : ''
     }`}>
       {/* Image */}
       <div className={`${
         viewMode === 'list'
           ? 'w-32 h-32 flex-shrink-0 overflow-hidden'
-          : 'relative'
+          : 'relative aspect-[4/3] overflow-hidden'
       } bg-gray-200`}>
         <img
           src={getImageUrl(service.images?.[0]?.url)}
@@ -47,7 +47,7 @@ const ServiceCard = ({ service, showProvider = true, viewMode = 'grid' }) => {
           className={`${
             viewMode === 'list'
               ? 'w-full h-full object-cover'
-              : 'w-full h-auto'
+              : 'w-full h-full object-cover'
           }`}
           onError={(e) => {
             e.target.src = 'https://via.placeholder.com/400x300?text=No+Image';
@@ -101,7 +101,7 @@ const ServiceCard = ({ service, showProvider = true, viewMode = 'grid' }) => {
 
         {/* Provider Info */}
         {showProvider && service.providerId && viewMode !== 'list' && (
-          <div className="flex items-center space-x-2 mb-1.5">
+          <div className="flex items-center space-x-2 mb-1">
             <img
               src={service.providerId.profilePic || 'https://via.placeholder.com/32'}
               alt={service.providerId.name}
@@ -129,8 +129,8 @@ const ServiceCard = ({ service, showProvider = true, viewMode = 'grid' }) => {
         )}
 
         {/* Footer */}
-        <div className={`flex items-start justify-between flex-wrap gap-2 ${
-          viewMode === 'list' ? '' : 'pt-2 border-t'
+        <div className={`flex items-start justify-between flex-wrap gap-1.5 ${
+          viewMode === 'list' ? '' : 'pt-1.5 border-t'
         }`}>
           {/* Price Section */}
           <div className="flex flex-col">

@@ -183,7 +183,7 @@ const Home = () => {
             <div className={
               viewMode === 'list'
                 ? 'space-y-2'
-                : 'grid grid-cols-2 lg:grid-cols-4 gap-2'
+                : 'grid grid-cols-2 lg:grid-cols-4 gap-1.5'
             }>
               {featuredServices.map((service) => (
                 <div key={service._id} className={viewMode === 'list' ? 'h-32' : ''}>
