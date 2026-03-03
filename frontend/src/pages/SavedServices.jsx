@@ -31,9 +31,11 @@ const SavedServices = () => {
           <Loader size="lg" />
         </div>
       ) : savedServices.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        <div className="masonry-container cols-4-lg">
           {savedServices.map((service) => (
-            <ServiceCard key={service._id} service={service} />
+            <div key={service._id} className="masonry-item-gap-6">
+              <ServiceCard service={service} />
+            </div>
           ))}
         </div>
       ) : (
