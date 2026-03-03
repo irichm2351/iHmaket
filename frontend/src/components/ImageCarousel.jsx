@@ -38,7 +38,7 @@ const ImageCarousel = ({ images, title }) => {
         <img
           src={getImageUrl(currentImage?.url)}
           alt={`${title} ${currentImageIndex + 1}`}
-          className="w-full h-96 object-cover"
+          className="w-full h-auto max-h-96 object-contain block"
         />
 
         {/* Image Counter */}
@@ -84,7 +84,7 @@ const ImageCarousel = ({ images, title }) => {
               <img
                 src={getImageUrl(img.url)}
                 alt={`${title} ${index + 1}`}
-                className="w-full h-full object-cover"
+                className="w-full h-full object-contain bg-gray-100"
               />
               <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition" />
             </button>
