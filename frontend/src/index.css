@@ -89,6 +89,8 @@
   }
 
   .masonry-item {
+    -webkit-column-break-inside: avoid;
+    page-break-inside: avoid;
     break-inside: avoid;
     margin-bottom: 0.375rem;
     display: inline-block;
@@ -97,10 +99,17 @@
   }
 
   .masonry-item-gap-6 {
+    -webkit-column-break-inside: avoid;
+    page-break-inside: avoid;
     break-inside: avoid;
     margin-bottom: 0.375rem;
     display: inline-block;
     width: 100%;
     vertical-align: top;
+  }
+
+  .masonry-item > *,
+  .masonry-item-gap-6 > * {
+    margin: 0;
   }
 }
