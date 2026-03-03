@@ -38,8 +38,8 @@ const ServiceCard = ({ service, showProvider = true, viewMode = 'grid' }) => {
       {/* Image */}
       <div className={`${
         viewMode === 'list'
-          ? 'w-32 flex-shrink-0 relative'
-          : 'relative'
+          ? 'w-32 h-32 flex-shrink-0 relative'
+          : 'relative w-full'
       } bg-gray-200`}>
         <img
           src={getImageUrl(service.images?.[0]?.url)}
@@ -47,8 +47,9 @@ const ServiceCard = ({ service, showProvider = true, viewMode = 'grid' }) => {
           className={`${
             viewMode === 'list'
               ? 'w-full h-full object-cover block'
-              : 'w-full h-48 object-cover block'
+              : 'w-full h-auto object-cover block'
           }`}
+          style={viewMode !== 'list' ? { minHeight: '180px', maxHeight: '320px' } : {}}
           onError={(e) => {
             e.target.src = 'https://via.placeholder.com/400x300?text=No+Image';
           }}
