@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { FiUsers, FiShoppingBag, FiPower, FiSlash, FiTrash2, FiSearch, FiChevronDown, FiChevronUp, FiMessageSquare, FiSend } from 'react-icons/fi';
+import { FiUsers, FiShoppingBag, FiPower, FiSlash, FiTrash2, FiSearch, FiChevronDown, FiChevronUp, FiMessageSquare, FiSend, FiEye, FiX } from 'react-icons/fi';
 import Loader from '../components/Loader';
 import toast from 'react-hot-toast';
 import { getAuthToken, API_URL } from '../utils/api';
@@ -37,6 +37,9 @@ const AdminDashboard = () => {
   });
   const [subscriptionLoading, setSubscriptionLoading] = useState(false);
   const [subscriptionSaving, setSubscriptionSaving] = useState(false);
+  const [showUserProfileModal, setShowUserProfileModal] = useState(false);
+  const [selectedUserProfile, setSelectedUserProfile] = useState(null);
+  const [profileLoading, setProfileLoading] = useState(false);
   const limit = 10;
 
   const toggleKycExpand = (id) => {
@@ -268,6 +271,48 @@ const AdminDashboard = () => {
     } catch (error) {
       toast.error('Error updating role');
     }
+  };
+
+  const handleViewUserProfile = async (userId) => {
+    try {
+      setProfileLoading(true);
+      setShowUserProfileModal(true);
+      const token = getAuthToken();
+      
+      // Fetch user details
+      const response = await fetch(
+        `${API_URL}/admin/users/${userId}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      const data = await response.json();
+      
+      if (data.success) {
+        setSelectedUserProfile(data.user);
+        
+        // Mark user as viewed if they're new
+        if (data.user.isNewUser) {
+          await fetch(
+            `${API_URL}/admin/users/${userId}/mark-viewed`,
+            {
+              method: 'PUT',
+              headers: { Authorization: `Bearer ${token}` }
+            }
+          );
+          // Refresh users list to update the NEW badge
+          fetchUsers();
+        }
+      }
+    } catch (error) {
+      toast.error('Error fetching user profile');
+      console.error(error);
+    } finally {
+      setProfileLoading(false);
+    }
+  };
+
+  const closeUserProfileModal = () => {
+    setShowUserProfileModal(false);
+    setSelectedUserProfile(null);
   };
 
   const handleApproveKyc = async (userId) => {
@@ -809,7 +854,14 @@ const AdminDashboard = () => {
                   {users.map((user) => (
                     <tr key={user._id} className="border-b hover:bg-gray-50">
                       <td className="px-6 py-4">
-                        <div className="font-medium text-gray-900">{user.name}</div>
+                        <div className="flex items-center gap-2">
+                          <div className="font-medium text-gray-900">{user.name}</div>
+                          {user.isNewUser && (
+                            <span className="px-2 py-0.5 bg-blue-500 text-white text-xs font-semibold rounded-full animate-pulse">
+                              NEW
+                            </span>
+                          )}
+                        </div>
                       </td>
                       <td className="px-6 py-4 text-sm text-gray-600">{user.email}</td>
                       <td className="px-6 py-4 text-sm text-gray-600">{user.phone || 'N/A'}</td>
@@ -839,6 +891,13 @@ const AdminDashboard = () => {
                       </td>
                       <td className="px-6 py-4">
                         <div className="flex gap-2">
+                          <button
+                            onClick={() => handleViewUserProfile(user._id)}
+                            title="View Profile"
+                            className="p-2 hover:bg-blue-100 rounded text-blue-600 transition"
+                          >
+                            <FiEye size={18} />
+                          </button>
                           <button
                             onClick={() => handleToggleStatus(user._id)}
                             title={user.isActive ? 'Deactivate' : 'Activate'}
@@ -1398,6 +1457,177 @@ const AdminDashboard = () => {
                 {bulkMessageLoading ? 'Sending to all users...' : 'Send to All Users'}
               </button>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* User Profile Modal */}
+      {showUserProfileModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between p-6 border-b">
+              <h2 className="text-2xl font-bold text-gray-900">User Profile</h2>
+              <button
+                onClick={closeUserProfileModal}
+                className="p-2 hover:bg-gray-100 rounded-full transition"
+              >
+                <FiX size={24} />
+              </button>
+            </div>
+
+            {/* Modal Content */}
+            <div className="p-6">
+              {profileLoading ? (
+                <div className="flex justify-center items-center py-12">
+                  <Loader />
+                </div>
+              ) : selectedUserProfile ? (
+                <div className="space-y-6">
+                  {/* User Basic Info */}
+                  <div className="bg-gray-50 rounded-lg p-4">
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="text-lg font-semibold text-gray-900">Basic Information</h3>
+                      {selectedUserProfile.isNewUser && (
+                        <span className="px-3 py-1 bg-blue-500 text-white text-sm font-semibold rounded-full">
+                          NEW USER
+                        </span>
+                      )}
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <span className="text-sm font-medium text-gray-600">Name:</span>
+                        <p className="text-gray-900 mt-1">{selectedUserProfile.name}</p>
+                      </div>
+                      <div>
+                        <span className="text-sm font-medium text-gray-600">Email:</span>
+                        <p className="text-gray-900 mt-1">{selectedUserProfile.email}</p>
+                      </div>
+                      <div>
+                        <span className="text-sm font-medium text-gray-600">Phone:</span>
+                        <p className="text-gray-900 mt-1">{selectedUserProfile.phone || 'Not provided'}</p>
+                      </div>
+                      <div>
+                        <span className="text-sm font-medium text-gray-600">Role:</span>
+                        <p className="text-gray-900 mt-1 capitalize">{selectedUserProfile.role}</p>
+                      </div>
+                      <div>
+                        <span className="text-sm font-medium text-gray-600">Status:</span>
+                        <p className="mt-1">
+                          <span
+                            className={`px-3 py-1 rounded-full text-xs font-medium ${
+                              selectedUserProfile.isRestricted
+                                ? 'bg-red-100 text-red-700'
+                                : selectedUserProfile.isActive
+                                ? 'bg-green-100 text-green-700'
+                                : 'bg-gray-100 text-gray-700'
+                            }`}
+                          >
+                            {selectedUserProfile.isRestricted ? 'Restricted' : selectedUserProfile.isActive ? 'Active' : 'Inactive'}
+                          </span>
+                        </p>
+                      </div>
+                      <div>
+                        <span className="text-sm font-medium text-gray-600">Joined:</span>
+                        <p className="text-gray-900 mt-1">
+                          {new Date(selectedUserProfile.createdAt).toLocaleDateString('en-US', {
+                            year: 'numeric',
+                            month: 'long',
+                            day: 'numeric'
+                          })}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Location Info */}
+                  {selectedUserProfile.location && (
+                    <div className="bg-gray-50 rounded-lg p-4">
+                      <h3 className="text-lg font-semibold text-gray-900 mb-4">Location</h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <span className="text-sm font-medium text-gray-600">State:</span>
+                          <p className="text-gray-900 mt-1">{selectedUserProfile.location.state || 'Not provided'}</p>
+                        </div>
+                        <div>
+                          <span className="text-sm font-medium text-gray-600">City:</span>
+                          <p className="text-gray-900 mt-1">{selectedUserProfile.location.city || 'Not provided'}</p>
+                        </div>
+                        {selectedUserProfile.location.lga && (
+                          <div className="md:col-span-2">
+                            <span className="text-sm font-medium text-gray-600">LGA:</span>
+                            <p className="text-gray-900 mt-1">{selectedUserProfile.location.lga}</p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* KYC Status (for providers) */}
+                  {selectedUserProfile.role === 'provider' && (
+                    <div className="bg-gray-50 rounded-lg p-4">
+                      <h3 className="text-lg font-semibold text-gray-900 mb-4">Provider Information</h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <span className="text-sm font-medium text-gray-600">KYC Status:</span>
+                          <p className="mt-1">
+                            <span
+                              className={`px-3 py-1 rounded-full text-xs font-medium ${
+                                selectedUserProfile.kycStatus === 'verified'
+                                  ? 'bg-green-100 text-green-700'
+                                  : selectedUserProfile.kycStatus === 'rejected'
+                                  ? 'bg-red-100 text-red-700'
+                                  : 'bg-yellow-100 text-yellow-700'
+                              }`}
+                            >
+                              {selectedUserProfile.kycStatus || 'Not submitted'}
+                            </span>
+                          </p>
+                        </div>
+                        <div>
+                          <span className="text-sm font-medium text-gray-600">Verified:</span>
+                          <p className="text-gray-900 mt-1">{selectedUserProfile.isVerified ? 'Yes' : 'No'}</p>
+                        </div>
+                        {selectedUserProfile.servicesCount !== undefined && (
+                          <div>
+                            <span className="text-sm font-medium text-gray-600">Services Posted:</span>
+                            <p className="text-gray-900 mt-1">{selectedUserProfile.servicesCount}</p>
+                          </div>
+                        )}
+                        {selectedUserProfile.bookingsCount !== undefined && (
+                          <div>
+                            <span className="text-sm font-medium text-gray-600">Total Bookings:</span>
+                            <p className="text-gray-900 mt-1">{selectedUserProfile.bookingsCount}</p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Restriction Info */}
+                  {selectedUserProfile.isRestricted && selectedUserProfile.restrictionReason && (
+                    <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                      <h3 className="text-lg font-semibold text-red-900 mb-2">Restriction Details</h3>
+                      <p className="text-sm text-red-800">{selectedUserProfile.restrictionReason}</p>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="text-center py-12 text-gray-500">
+                  No user data available
+                </div>
+              )}
+            </div>
+
+            {/* Modal Footer */}
+            <div className="flex justify-end gap-3 p-6 border-t bg-gray-50">
+              <button
+                onClick={closeUserProfileModal}
+                className="px-6 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 rounded-lg transition"
+              >
+                Close
+              </button>
+            </div>
           </div>
         </div>
       )}

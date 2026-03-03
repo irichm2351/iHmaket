@@ -15,6 +15,7 @@ router.get('/users/:id', adminController.getUserDetail);
 router.put('/users/:id/role', adminController.updateUserRole);
 router.put('/users/:id/status', adminController.toggleUserStatus);
 router.put('/users/:id/restrict', adminController.toggleUserRestriction);
+router.put('/users/:id/mark-viewed', adminController.markUserAsViewed);
 router.put('/users/mark-viewed', adminController.markUsersAsViewed);
 router.delete('/users/:id', adminController.deleteUser);
 

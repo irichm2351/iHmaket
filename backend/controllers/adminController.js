@@ -290,6 +290,43 @@ exports.markUsersAsViewed = async (req, res) => {
   }
 };
 
+// @desc    Mark specific user as viewed by admin
+// @route   PUT /api/admin/users/:id/mark-viewed
+// @access  Private/Admin
+exports.markUserAsViewed = async (req, res) => {
+  try {
+    const user = await User.findByIdAndUpdate(
+      req.params.id,
+      { 
+        $set: { 
+          isNewUser: false,
+          viewedByAdminAt: new Date()
+        }
+      },
+      { new: true }
+    ).select('-password');
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    res.json({
+      success: true,
+      message: 'User marked as viewed',
+      user
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Error marking user as viewed',
+      error: error.message
+    });
+  }
+};
+
 // @desc    Get all KYC submissions
 // @route   GET /api/admin/kyc
 // @access  Private/Admin
