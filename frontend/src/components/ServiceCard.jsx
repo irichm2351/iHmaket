@@ -115,9 +115,16 @@ const ServiceCard = ({ service, showProvider = true, viewMode = 'grid' }) => {
               }}
               title="View picture"
             />
-            <span className="text-xs text-gray-700 font-medium">
-              {service.providerId.name}
-            </span>
+            <div className="flex flex-col">
+              <span className="text-xs text-gray-700 font-medium">
+                {service.providerId.name}
+              </span>
+              {service.providerId.location?.lga && service.providerId.location?.state && (
+                <span className="text-[11px] text-gray-500">
+                  {service.providerId.location.lga}, {service.providerId.location.state}
+                </span>
+              )}
+            </div>
           </div>
         )}
 
