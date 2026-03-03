@@ -302,7 +302,7 @@ const ServiceDetailScreen = ({ route, serviceId }) => {
             <Image
               source={{ uri: getImageUrl(service.images[selectedImageIndex]?.url) }}
               style={styles.mainImage}
-              resizeMode="contain"
+              resizeMode="cover"
             />
             {service.images.length > 1 && (
               <FlatList
@@ -322,7 +322,7 @@ const ServiceDetailScreen = ({ route, serviceId }) => {
                     <Image
                       source={{ uri: getImageUrl(item.url) }}
                       style={styles.thumbnailImage}
-                      resizeMode="contain"
+                      resizeMode="cover"
                     />
                   </TouchableOpacity>
                 )}
