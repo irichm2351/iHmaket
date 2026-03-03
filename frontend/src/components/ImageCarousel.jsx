@@ -4,6 +4,8 @@ import { getImageUrl } from '../utils/api';
 
 const ImageCarousel = ({ images, title, onImageClick }) => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [dragStart, setDragStart] = useState(null);
+  const [isDragging, setIsDragging] = useState(false);
 
   if (!images || images.length === 0) {
     return (
@@ -31,11 +33,89 @@ const ImageCarousel = ({ images, title, onImageClick }) => {
 
   const currentImage = images[currentImageIndex];
 
+    const handleMouseDown = (e) => {
+      if (images.length <= 1) return;
+      setDragStart(e.clientX);
+      setIsDragging(true);
+    };
+
+    const handleMouseMove = (e) => {
+      if (!isDragging || !dragStart) return;
+    };
+
+    const handleMouseUp = (e) => {
+      if (!isDragging || dragStart === null) {
+        setIsDragging(false);
+        setDragStart(null);
+        return;
+      }
+
+      const dragEnd = e.clientX;
+      const diff = dragStart - dragEnd;
+      const threshold = 50;
+
+      if (Math.abs(diff) > threshold) {
+        if (diff > 0) {
+          goToNext();
+        } else {
+          goToPrevious();
+        }
+      }
+
+      setIsDragging(false);
+      setDragStart(null);
+    };
+
+    const handleTouchStart = (e) => {
+      if (images.length <= 1) return;
+      setDragStart(e.touches[0].clientX);
+      setIsDragging(true);
+    };
+
+    const handleTouchMove = (e) => {
+      if (!isDragging || !dragStart) return;
+    };
+
+    const handleTouchEnd = (e) => {
+      if (!isDragging || dragStart === null) {
+        setIsDragging(false);
+        setDragStart(null);
+        return;
+      }
+
+      const dragEnd = e.changedTouches[0].clientX;
+      const diff = dragStart - dragEnd;
+      const threshold = 30;
+
+      if (Math.abs(diff) > threshold) {
+        if (diff > 0) {
+          goToNext();
+        } else {
+          goToPrevious();
+        }
+      }
+
+      setIsDragging(false);
+      setDragStart(null);
+    };
+
   return (
     <div className="mb-6">
       {/* Main Image with Navigation */}
       <div className="relative bg-gray-100 rounded-lg overflow-hidden group cursor-pointer"
-        onClick={() => onImageClick && onImageClick(getImageUrl(currentImage?.url))}
+          onClick={(e) => {
+            if (!isDragging && dragStart === null) {
+              onImageClick && onImageClick(getImageUrl(currentImage?.url));
+            }
+          }}
+         onMouseDown={handleMouseDown}
+         onMouseMove={handleMouseMove}
+         onMouseUp={handleMouseUp}
+         onMouseLeave={handleMouseUp}
+         onTouchStart={handleTouchStart}
+         onTouchMove={handleTouchMove}
+         onTouchEnd={handleTouchEnd}
+         style={{ userSelect: isDragging ? 'none' : 'auto' }}
         title="Click to enlarge">
         <img
           src={getImageUrl(currentImage?.url)}
@@ -52,14 +132,22 @@ const ImageCarousel = ({ images, title, onImageClick }) => {
         {images.length > 1 && (
           <>
             <button
-              onClick={goToPrevious}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  e.preventDefault();
+                  goToPrevious();
+                }}
               className="absolute left-4 top-1/2 -translate-y-1/2 bg-white bg-opacity-90 hover:bg-opacity-100 text-black rounded-full p-2 transition opacity-0 group-hover:opacity-100 z-10"
               title="Previous image"
             >
               <FiChevronLeft size={24} />
             </button>
             <button
-              onClick={goToNext}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  e.preventDefault();
+                  goToNext();
+                }}
               className="absolute right-4 top-1/2 -translate-y-1/2 bg-white bg-opacity-90 hover:bg-opacity-100 text-black rounded-full p-2 transition opacity-0 group-hover:opacity-100 z-10"
               title="Next image"
             >
