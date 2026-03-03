@@ -175,7 +175,7 @@ const SavedServicesScreen = () => {
                   <Image
                     source={{ uri: getImageUrl(service.images[0]) }}
                     style={styles.serviceImage}
-                    resizeMode="cover"
+                    resizeMode="contain"
                   />
                 ) : (
                   <View style={styles.imagePlaceholder}>

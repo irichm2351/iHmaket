@@ -314,7 +314,7 @@ const DashboardScreen = () => {
                           <Image
                             source={{ uri: typeof item.images[0] === 'object' ? item.images[0].url : item.images[0] }}
                             style={styles.serviceImage}
-                            resizeMode="cover"
+                            resizeMode="contain"
                           />
                         ) : (
                           <View style={styles.imagePlaceholder}>

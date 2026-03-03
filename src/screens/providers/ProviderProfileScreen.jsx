@@ -291,6 +291,7 @@ const ProviderProfileScreen = ({ providerId }) => {
                       <Image
                         source={{ uri: getImageUrl(item.images[0]?.url || item.images[0]) }}
                         style={styles.serviceImage}
+                        resizeMode="contain"
                       />
                     ) : (
                       <MaterialCommunityIcons name="image" size={36} color="#d1d5db" />

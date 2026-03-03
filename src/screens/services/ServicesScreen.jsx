@@ -219,7 +219,7 @@ const ServicesScreen = () => {
                   <Image
                     source={{ uri: typeof service.images[0] === 'object' ? service.images[0].url : service.images[0] }}
                     style={styles.serviceImageContent}
-                    resizeMode="cover"
+                    resizeMode="contain"
                   />
                 ) : (
                   <MaterialCommunityIcons name="image" size={40} color="#d1d5db" />
