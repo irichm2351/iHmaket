@@ -70,7 +70,7 @@ const userSchema = new mongoose.Schema({
   }],
   subscriptionStatus: {
     type: String,
-    enum: ['active', 'inactive'],
+    enum: ['active', 'inactive', 'paused'],
     default: 'inactive'
   },
   subscriptionExpiresAt: {
