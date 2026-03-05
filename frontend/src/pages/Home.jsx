@@ -13,7 +13,7 @@ const categories = [
   { name: 'Beauty & Makeup', icon: '/beauty-and-makeup.jpg', isImage: true },
   { name: 'IT & Tech Support', icon: '/it-tech-support.jpg', isImage: true },
   { name: 'Photography', icon: '/photography.png', isImage: true },
-  { name: 'Catering', icon: '🍳' },
+  { name: 'Catering', icon: '/catering-2.png', isImage: true },
   { name: 'Tutoring', icon: '📚' },
   { name: 'Home Repair', icon: '🔨' },
 ];
