@@ -130,12 +130,12 @@ const Home = () => {
                 to={`/services?category=${encodeURIComponent(category.name)}`}
                 className="card p-6 text-center hover:shadow-xl transition-all group"
               >
-                <div className="mb-3 group-hover:scale-110 transition-transform flex items-center justify-center h-12">
+                <div className="mb-3 group-hover:scale-110 transition-transform flex items-center justify-center h-20">
                   {category.isImage ? (
                     <img
                       src={category.icon}
                       alt={category.name}
-                      className="h-12 w-12 object-contain"
+                      className="h-20 w-20 object-contain"
                     />
                   ) : (
                     <div className="text-4xl">{category.icon}</div>
