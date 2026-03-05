@@ -12,7 +12,7 @@ const categories = [
   { name: 'Cleaning', icon: '/cleaning2.jpg', isImage: true },
   { name: 'Beauty & Makeup', icon: '/beauty-and-makeup.jpg', isImage: true },
   { name: 'IT & Tech Support', icon: '/it-tech-support.jpg', isImage: true },
-  { name: 'Photography', icon: '📷' },
+  { name: 'Photography', icon: '/photography.png', isImage: true },
   { name: 'Catering', icon: '🍳' },
   { name: 'Tutoring', icon: '📚' },
   { name: 'Home Repair', icon: '🔨' },
