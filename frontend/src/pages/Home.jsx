@@ -15,7 +15,7 @@ const categories = [
   { name: 'Photography', icon: '/photography.png', isImage: true },
   { name: 'Catering', icon: '/catering-2.png', isImage: true },
   { name: 'Tutoring', icon: '/tutoring.jpg', isImage: true },
-  { name: 'Home Repair', icon: '🔨' },
+  { name: 'Home Repair', icon: '/home-repair.jpg', isImage: true },
 ];
 
 const Home = () => {
