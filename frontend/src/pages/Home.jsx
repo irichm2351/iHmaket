@@ -8,7 +8,7 @@ import useAuthStore from '../store/authStore';
 import { nigeriaData } from '../utils/nigeriaData';
 
 const categories = [
-  { name: 'Plumbing', icon: '🔧' },
+  { name: 'Plumbing', icon: '/plumbing.webp', isImage: true },
   { name: 'Cleaning', icon: '🧹' },
   { name: 'Beauty & Makeup', icon: '💄' },
   { name: 'IT & Tech Support', icon: '💻' },
@@ -130,8 +130,16 @@ const Home = () => {
                 to={`/services?category=${encodeURIComponent(category.name)}`}
                 className="card p-6 text-center hover:shadow-xl transition-all group"
               >
-                <div className="text-4xl mb-3 group-hover:scale-110 transition-transform">
-                  {category.icon}
+                <div className="mb-3 group-hover:scale-110 transition-transform flex items-center justify-center h-12">
+                  {category.isImage ? (
+                    <img
+                      src={category.icon}
+                      alt={category.name}
+                      className="h-12 w-12 object-contain"
+                    />
+                  ) : (
+                    <div className="text-4xl">{category.icon}</div>
+                  )}
                 </div>
                 <h3 className="text-sm font-medium text-gray-900">
                   {category.name}
