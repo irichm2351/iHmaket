@@ -9,7 +9,7 @@ import { nigeriaData } from '../utils/nigeriaData';
 
 const categories = [
   { name: 'Plumbing', icon: '/plumbing.webp', isImage: true },
-  { name: 'Cleaning', icon: '🧹' },
+  { name: 'Cleaning', icon: '/cleaning2.jpg', isImage: true },
   { name: 'Beauty & Makeup', icon: '💄' },
   { name: 'IT & Tech Support', icon: '💻' },
   { name: 'Photography', icon: '📷' },
