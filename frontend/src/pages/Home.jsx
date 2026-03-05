@@ -14,7 +14,7 @@ const categories = [
   { name: 'IT & Tech Support', icon: '/it-tech-support.jpg', isImage: true },
   { name: 'Photography', icon: '/photography.png', isImage: true },
   { name: 'Catering', icon: '/catering-2.png', isImage: true },
-  { name: 'Tutoring', icon: '📚' },
+  { name: 'Tutoring', icon: '/tutoring.jpg', isImage: true },
   { name: 'Home Repair', icon: '🔨' },
 ];
 
