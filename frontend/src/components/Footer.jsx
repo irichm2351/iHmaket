@@ -123,7 +123,7 @@ const Footer = () => {
               </a>
             </div>
             <p className="text-sm text-gray-400">
-              Email: ihmaket2026@gmail.com<br />
+              Email: help@ihmaket.com<br />
               Phone: +234 815 598 4660
             </p>
           </div>
