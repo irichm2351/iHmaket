@@ -61,7 +61,7 @@ const TermsPrivacyScreen = () => {
     },
     {
       title: '5. Your Privacy Rights',
-      content: 'You have the right to access, correct, delete, or export your personal data. Contact us at ihmaket2026@gmail.com to exercise your rights.',
+      content: 'You have the right to access, correct, delete, or export your personal data. Contact us at help@ihmaket.com to exercise your rights.',
     },
     {
       title: '6. Cookies & Tracking',
@@ -73,7 +73,7 @@ const TermsPrivacyScreen = () => {
     },
     {
       title: '8. Contact Us',
-      content: 'For privacy-related questions or concerns, contact us at ihmaket2026@gmail.com. We will respond within 7 business days.',
+      content: 'For privacy-related questions or concerns, contact us at help@ihmaket.com. We will respond within 7 business days.',
     },
   ];
 
@@ -136,7 +136,7 @@ const TermsPrivacyScreen = () => {
           <MaterialCommunityIcons name="email-outline" size={24} color="#3b82f6" />
           <Text style={styles.contactTitle}>Questions or Concerns?</Text>
           <Text style={styles.contactText}>
-            Contact us at ihmaket2026@gmail.com
+            Contact us at help@ihmaket.com
           </Text>
         </View>
       </ScrollView>

@@ -121,7 +121,7 @@ const HelpSupportScreen = () => {
       id: 19,
       category: 'Safety & Security',
       question: 'What if I have a problem with a provider?',
-      answer: 'First, communicate with the provider through messages. If unresolved, contact ihmaket2026@gmail.com. While we don\'t handle payments, we mediate disputes and take action against policy violations.',
+      answer: 'First, communicate with the provider through messages. If unresolved, contact help@ihmaket.com. While we don\'t handle payments, we mediate disputes and take action against policy violations.',
     },
     {
       id: 20,
@@ -229,12 +229,12 @@ const HelpSupportScreen = () => {
 
           <TouchableOpacity
             style={styles.supportButton}
-            onPress={() => Linking.openURL('mailto:ihmaket2026@gmail.com')}
+            onPress={() => Linking.openURL('mailto:help@ihmaket.com')}
           >
             <MaterialCommunityIcons name="email" size={20} color="#ffffff" />
             <View style={{ marginLeft: 12 }}>
               <Text style={styles.supportButtonTitle}>Email Support</Text>
-              <Text style={styles.supportButtonSubtitle}>ihmaket2026@gmail.com</Text>
+              <Text style={styles.supportButtonSubtitle}>help@ihmaket.com</Text>
             </View>
           </TouchableOpacity>
 
