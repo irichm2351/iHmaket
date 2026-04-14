@@ -300,9 +300,9 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   mkpLogo: {
-    width: 70,
-    height: 70,
-    marginRight: -12,
+    width: 54,
+    height: 54,
+    marginRight: -10,
   },
   servoText: {
     fontSize: 26,
