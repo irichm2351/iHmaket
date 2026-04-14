@@ -34,7 +34,7 @@ const Navbar = () => {
             <img 
               src="/iHlogo1.jpg" 
               alt="iHmaket Logo" 
-              className="w-16 h-16 rounded-lg object-cover"
+              className="w-12 h-12 rounded-lg object-cover"
             />
             <span className="text-xl font-bold text-gray-900 -ml-3">maket</span>
           </Link>
