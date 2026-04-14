@@ -31,12 +31,12 @@ const Navbar = () => {
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
           <Link to="/" className="flex items-center">
+            <span className="text-xl font-bold text-gray-900 mr-2">maket</span>
             <img 
               src="/iHlogo1.jpg" 
               alt="iHmaket Logo" 
               className="w-12 h-12 rounded-lg object-cover"
             />
-            <span className="text-xl font-bold text-gray-900 -ml-3">maket</span>
           </Link>
 
           {/* Desktop Navigation */}
