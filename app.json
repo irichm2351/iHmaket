@@ -4,18 +4,19 @@
     "slug": "ihmaket",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/iHlogo1.jpg",
+    "icon": "./assets/images/iHlogo1.png",
     "scheme": "ihmaket",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.ihmaket.app"
     },
     "android": {
       "package": "com.ihmaket.app",
       "versionCode": 1,
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/iHlogo1.jpg",
+        "foregroundImage": "./assets/images/iHlogo1.png",
         "backgroundColor": "#ffffff"
       },
       "permissions": [
@@ -31,23 +32,14 @@
       "output": "static",
       "favicon": "./assets/images/favicon.png"
     },
-    "permissions": [
-      "camera",
-      "photo"
-    ],
     "splash": {
-      "image": "./assets/images/iHmaket.jpg",
+      "image": "./assets/images/splash.png",
       "resizeMode": "contain",
       "backgroundColor": "#1e40af"
     },
     "plugins": [
       "expo-router",
-      [
-        "expo-splash-screen",
-        {
-          "imageWidth": 200
-        }
-      ]
+      "expo-splash-screen"
     ],
     "experiments": {
       "typedRoutes": true,
@@ -56,9 +48,9 @@
     "extra": {
       "router": {},
       "eas": {
-        "projectId": "6b9d24a0-9876-4707-b6d4-040f1be066f1"
+        "projectId": "084cb782-8cd0-4892-8a3c-8b5ea3fa0936"
       }
     },
-    "owner": "irichgee"
+    "owner": "irichmoses"
   }
 }
